@@ -1,0 +1,15 @@
+node_modules/
+.next/
+.env
+*.log
+*.tsbuildinfo
+.DS_Store
+
+# Runtime storage
+uploads/*
+!uploads/.gitkeep
+
+# Local/generated packages
+*.zip
+*.tar
+*.tar.gz
