@@ -1,0 +1,138 @@
+name: Import Badje Catalog source tree
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  import-source:
+    if: ${{ hashFiles('.bootstrap/fix-000a.txt') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout staged branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reassemble ZIP data prefix
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat \
+            .bootstrap/fix-000a.txt \
+            .bootstrap/fix-000b.txt \
+            .bootstrap/chunk-001.txt \
+            .bootstrap/chunk-002.txt \
+            .bootstrap/chunk-003.txt \
+            .bootstrap/chunk-004.txt \
+            .bootstrap/fix-005a.txt \
+            .bootstrap/fix-005b.txt \
+            .bootstrap/chunk-006.txt \
+            .bootstrap/chunk-007.txt \
+            .bootstrap/chunk-008.txt \
+            .bootstrap/chunk-009.txt \
+            .bootstrap/chunk-010.txt \
+            .bootstrap/chunk-011a.txt \
+            .bootstrap/chunk-011b.txt \
+            .bootstrap/chunk-011c.txt \
+            .bootstrap/chunk-011d.txt \
+            > /tmp/source-prefix.b64
+          base64 --decode /tmp/source-prefix.b64 > /tmp/source-prefix.bin
+          test "$(wc -c < /tmp/source-prefix.bin)" -gt 100000
+
+      - name: Extract ZIP local entries
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import binascii
+          import pathlib
+          import struct
+          import zlib
+
+          data = pathlib.Path('/tmp/source-prefix.bin').read_bytes()
+          root = pathlib.Path.cwd().resolve()
+          pos = 0
+          extracted = 0
+          local_sig = b'PK\x03\x04'
+          central_sig = b'PK\x01\x02'
+
+          while pos + 4 <= len(data):
+              sig = data[pos:pos+4]
+              if sig == central_sig:
+                  break
+              if sig != local_sig:
+                  raise SystemExit(f'Unexpected ZIP signature at offset {pos}: {sig!r}')
+              if pos + 30 > len(data):
+                  raise SystemExit('Truncated ZIP local header')
+
+              header = struct.unpack_from('<IHHHHHIIIHH', data, pos)
+              _, version, flags, method, mtime, mdate, crc32, csize, usize, name_len, extra_len = header
+              pos += 30
+              name_raw = data[pos:pos+name_len]
+              pos += name_len
+              pos += extra_len
+
+              if flags & 0x08:
+                  raise SystemExit('Unexpected ZIP data-descriptor entry')
+              if pos + csize > len(data):
+                  raise SystemExit('Truncated ZIP entry data')
+
+              compressed = data[pos:pos+csize]
+              pos += csize
+              encoding = 'utf-8' if (flags & 0x800) else 'cp437'
+              name = name_raw.decode(encoding)
+
+              if method == 0:
+                  payload = compressed
+              elif method == 8:
+                  payload = zlib.decompress(compressed, -15)
+              else:
+                  raise SystemExit(f'Unsupported ZIP compression method {method} for {name}')
+
+              if len(payload) != usize:
+                  raise SystemExit(f'Uncompressed size mismatch for {name}')
+              if (binascii.crc32(payload) & 0xffffffff) != crc32:
+                  raise SystemExit(f'CRC mismatch for {name}')
+
+              prefix = 'badje-catalog/'
+              if not name.startswith(prefix):
+                  raise SystemExit(f'Unexpected archive path: {name}')
+              rel = name[len(prefix):]
+              if not rel or rel.endswith('/'):
+                  continue
+
+              dest = (root / rel).resolve()
+              if root not in dest.parents:
+                  raise SystemExit(f'Unsafe archive path: {name}')
+              dest.parent.mkdir(parents=True, exist_ok=True)
+              dest.write_bytes(payload)
+              extracted += 1
+
+          print(f'Extracted {extracted} project files; stopped at ZIP central directory offset {pos}.')
+          if extracted < 60:
+              raise SystemExit(f'Expected at least 60 project files, got {extracted}')
+          PY
+
+          test -f Dockerfile
+          test -f docker-compose.yml
+          test -f package.json
+          test -f components/AdminDashboard.tsx
+          test -f 'app/api/admin/catalogs/[id]/regenerate/route.ts'
+          test -f pdf-engine/generate.py
+          grep -q 'PolyForm Noncommercial' LICENSE.md
+          grep -q 'Copyright 2026 Tooraj Valaee' LICENSE.md
+
+      - name: Remove bootstrap files and publish source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .bootstrap BOOTSTRAP.md
+          git config user.name "Tooraj Valaee"
+          git config user.email "tooraj.valaee@live.com"
+          git add -A
+          git commit -m "Import Badje Catalog v3.2.0 source"
+          git push origin HEAD:main
