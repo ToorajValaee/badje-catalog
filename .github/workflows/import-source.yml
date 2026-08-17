@@ -9,7 +9,6 @@ permissions:
 
 jobs:
   import-source:
-    if: ${{ hashFiles('.bootstrap/source.b64') != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -21,6 +20,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test -f .bootstrap/source.b64
           base64 --decode .bootstrap/source.b64 > /tmp/badje-catalog.zip
           rm -rf /tmp/badje-catalog-import
           mkdir -p /tmp/badje-catalog-import
