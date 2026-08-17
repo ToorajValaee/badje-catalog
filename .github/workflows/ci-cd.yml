@@ -1,0 +1,144 @@
+name: CI/CD
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: badje-catalog-production
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: Validate and build
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+      UPLOAD_DIR: /tmp/badje-catalog-uploads
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: ci-password-only
+      SESSION_SECRET: ci-session-secret-00000000000000000000000000000000
+      COOKIE_SECURE: "false"
+      MAX_UPLOAD_MB: "200"
+      CATALOG_RENDER_DPI: "200"
+      CATALOG_WEBP_QUALITY: "96"
+      CATALOG_WEBP_LOSSLESS: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package.json
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Compile Python renderer
+        run: python3 -m py_compile pdf-engine/generate.py
+
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Build production Docker image
+        run: docker build --pull -t badje-catalog:ci .
+
+  deploy:
+    name: Deploy to VPS
+    needs: ci
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_PORT: ${{ secrets.VPS_PORT }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
+    steps:
+      - name: Check deployment configuration
+        id: config
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${VPS_HOST}" ] || [ -z "${VPS_USER}" ] || [ -z "${VPS_SSH_KEY}" ] || [ -z "${VPS_APP_DIR}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "VPS deployment secrets are not configured yet; CI passed and deployment is skipped."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.config.outputs.configured == 'true'
+        uses: actions/checkout@v4
+
+      - name: Build deployment image
+        if: steps.config.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          docker build --pull -t badje-catalog:latest .
+          docker save badje-catalog:latest | gzip -1 > badje-catalog-image.tar.gz
+
+      - name: Configure SSH
+        if: steps.config.outputs.configured == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT="${VPS_PORT:-22}"
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "$PORT" -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload image and Compose file
+        if: steps.config.outputs.configured == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT="${VPS_PORT:-22}"
+          ssh -p "$PORT" "$VPS_USER@$VPS_HOST" "mkdir -p '$VPS_APP_DIR'"
+          scp -P "$PORT" badje-catalog-image.tar.gz docker-compose.yml "$VPS_USER@$VPS_HOST:$VPS_APP_DIR/"
+
+      - name: Deploy and verify health
+        if: steps.config.outputs.configured == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT="${VPS_PORT:-22}"
+          ssh -p "$PORT" "$VPS_USER@$VPS_HOST" "APP_DIR='$VPS_APP_DIR' bash -s" <<'REMOTE'
+          set -euo pipefail
+          cd "$APP_DIR"
+
+          test -f .env || { echo "Missing $APP_DIR/.env on VPS" >&2; exit 1; }
+          mkdir -p uploads/source uploads/generated uploads/.processing
+
+          gunzip -c badje-catalog-image.tar.gz | docker load
+          docker compose up -d --force-recreate
+
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8000/health >/tmp/badje-catalog-health.json; then
+              cat /tmp/badje-catalog-health.json
+              rm -f badje-catalog-image.tar.gz /tmp/badje-catalog-health.json
+              docker image prune -f >/dev/null 2>&1 || true
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker compose ps
+          docker compose logs --tail=120 catalog || true
+          echo "Deployment health check failed" >&2
+          exit 1
+          REMOTE
