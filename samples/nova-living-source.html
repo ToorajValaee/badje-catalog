@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<title>NOVA Living - Product Catalog</title>
+<style>
+@page { size:A4 portrait; margin:0; }
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;color:#18221f;font-family:Arial,Helvetica,sans-serif;background:#f6f4ef}
+a{color:inherit;text-decoration:none}
+.page{width:210mm;height:297mm;padding:10mm 12mm 10mm;page-break-after:always;position:relative;overflow:hidden;background:#faf9f6}
+.page:last-child{page-break-after:auto}
+.header{height:14mm;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #dedfd9}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:11px;direction:ltr}
+.mark{width:29px;height:29px;border-radius:9px;background:#284d3f;color:#fff;display:flex;align-items:center;justify-content:center;font:800 12px Arial}
+.nav{display:flex;align-items:center;gap:9px;font:600 7.8px Arial;color:#69756f;direction:ltr}
+.nav a{padding:5px 0;border-bottom:2px solid transparent}.nav a.active{color:#284d3f;border-color:#284d3f}
+
+.eyebrow{display:inline-flex;background:#e7eee9;color:#284d3f;padding:5px 9px;border-radius:999px;font-size:8px;font-weight:800}
+h1,h2,h3,p{margin-top:0}.en{direction:ltr;text-align:left;font-family:Arial,sans-serif}.muted{color:#6d7973}
+.footer{position:absolute;bottom:5.5mm;left:12mm;right:12mm;display:flex;justify-content:space-between;align-items:center;color:#89938e;font-size:7.5px}.footer .en{font-size:7.5px}
+.hero{min-height:251mm;display:grid;grid-template-rows:auto 1fr}
+.hero-grid{display:grid;grid-template-columns:1fr;gap:8mm;align-content:center;padding:9mm 0 6mm}
+.hero-copy{background:#fff;border:1px solid #e2e4de;border-radius:20px;padding:11mm;box-shadow:0 12px 35px rgba(26,48,40,.06)}
+.hero-copy h1{font-size:27px;line-height:1.5;margin:5mm 0 2mm;letter-spacing:-.3px}.hero-copy h1 b{color:#284d3f}
+.hero-copy .en-title{font:bold 22px/1.2 Arial;color:#284d3f;margin-top:3mm;direction:ltr;text-align:left}
+.hero-copy p{font-size:9.5px;line-height:2;color:#68756f;margin:6mm 0 0}.hero-copy p.en{font-size:9.5px;line-height:1.7}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:7mm}.btn{padding:7px 12px;border-radius:9px;font-size:8.5px;font-weight:800}.primary{background:#284d3f;color:#fff}.soft{background:#e7eee9;color:#284d3f}
+.hero-visual{background:#20372f;border-radius:22px;min-height:91mm;padding:8mm;position:relative;overflow:hidden;color:#fff}
+.hero-visual:before{content:"";position:absolute;width:84mm;height:84mm;border-radius:50%;background:#315b4c;left:-20mm;top:-25mm}.hero-visual:after{content:"";position:absolute;width:62mm;height:62mm;border-radius:50%;background:#d6c49f;right:-15mm;bottom:-20mm;opacity:.85}
+.room{position:relative;z-index:2;height:75mm;background:#f3efe5;border-radius:15px;overflow:hidden;padding:7mm;display:grid;grid-template-columns:1fr .7fr;gap:6mm;align-items:end}
+.sofa{height:31mm;background:#9aa79f;border-radius:10px 10px 8px 8px;position:relative}.sofa:before,.sofa:after{content:"";position:absolute;top:-8mm;width:43%;height:14mm;background:#aab6af;border-radius:8px}.sofa:before{right:4%}.sofa:after{left:4%}.sofa i{position:absolute;bottom:-4mm;right:12mm;width:3px;height:5mm;background:#513d2f;box-shadow:-36mm 0 #513d2f}
+.lamp{height:49mm;position:relative}.lamp:before{content:"";position:absolute;right:50%;top:0;width:2px;height:39mm;background:#5b615e}.lamp:after{content:"";position:absolute;right:calc(50% - 9mm);top:2mm;width:18mm;height:12mm;background:#d8c69e;border-radius:12px 12px 7px 7px;clip-path:polygon(20% 0,80% 0,100% 100%,0 100%)}.lamp span{position:absolute;bottom:0;right:calc(50% - 10mm);width:20mm;height:3mm;background:#5b615e;border-radius:50%}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm;margin-top:5mm}.stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:4mm;text-align:center}.stat b{display:block;font:800 14px Arial}.stat small{font-size:7.5px;color:#c9d4cf}
+.section{padding-top:8mm}.section-head{margin:6mm 0 7mm;display:grid;grid-template-columns:1fr;gap:2mm}.section-head h2{font-size:20px;line-height:1.55;margin:0}.section-head .en-title{font:bold 15px/1.2 Arial;color:#284d3f;direction:ltr;text-align:left}
+.product-grid{display:grid;grid-template-columns:1fr 1fr;gap:5mm}.product{background:#fff;border:1px solid #e1e4df;border-radius:16px;overflow:hidden}.product-art{height:59mm;background:#ece9df;padding:7mm;position:relative;display:flex;align-items:end;justify-content:center}.product:nth-child(2) .product-art{background:#e7eee9}.product:nth-child(3) .product-art{background:#eee5d8}.product:nth-child(4) .product-art{background:#e9e7e2}
+.chair{width:46mm;height:42mm;position:relative}.chair .seat{position:absolute;left:8mm;right:8mm;bottom:11mm;height:13mm;background:#6b806f;border-radius:10px}.chair .back{position:absolute;left:10mm;right:10mm;bottom:23mm;height:20mm;background:#7f9484;border-radius:12px 12px 7px 7px}.chair:before,.chair:after{content:"";position:absolute;bottom:0;width:2px;height:13mm;background:#5a4637}.chair:before{left:13mm}.chair:after{right:13mm}
+.table{width:50mm;height:35mm;position:relative}.table:before{content:"";position:absolute;left:0;right:0;top:0;height:6mm;background:#b69b77;border-radius:50%}.table:after{content:"";position:absolute;left:24mm;top:5mm;width:2mm;height:28mm;background:#6b5a46;box-shadow:-14mm 18mm 0 -0.5mm #6b5a46,14mm 18mm 0 -0.5mm #6b5a46}
+.vase{width:27mm;height:43mm;background:#9c6d57;border-radius:38% 38% 48% 48%;position:relative}.vase:before{content:"";position:absolute;top:-4mm;left:8mm;width:11mm;height:8mm;background:#9c6d57;border-radius:3px}
+.shelf{width:48mm;height:43mm;border:3px solid #765b43;border-radius:4px;position:relative}.shelf:before,.shelf:after{content:"";position:absolute;left:0;right:0;height:2px;background:#765b43}.shelf:before{top:13mm}.shelf:after{top:27mm}
+.product-body{padding:6mm}.product-body h3{font-size:12px;margin:0}.product-body .en-name{font:bold 10px Arial;color:#284d3f;margin-top:1mm;direction:ltr;text-align:left}.product-body p{font-size:8px;line-height:1.8;color:#6d7973;margin:3mm 0}.meta{display:flex;justify-content:space-between;align-items:center;margin-top:4mm}.price{font:800 10px Arial;color:#284d3f}.product a{font-size:8px;font-weight:800;color:#284d3f}
+.story-grid{display:grid;grid-template-columns:1fr;gap:6mm}.story-card{background:#fff;border:1px solid #e2e4df;border-radius:18px;padding:9mm}.story-card.dark{background:#20372f;color:#fff;border-color:#20372f}.story-card h3{font-size:16px;margin:0}.story-card .en-title{font:bold 12px Arial;color:#6e9a87;margin-top:1.5mm;direction:ltr;text-align:left}.story-card.dark .en-title{color:#c9ddd4}.story-card p{font-size:8.7px;line-height:2;color:#68766f;margin:5mm 0 0}.story-card.dark p{color:#c4d0ca}.material-row{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm;margin-top:6mm}.material{border-radius:12px;padding:5mm;background:#f0eee8;min-height:28mm}.material b{display:block;font-size:9px}.material span{display:block;font:7.5px Arial;color:#758079;margin-top:2mm;direction:ltr;text-align:left}
+.service-grid{display:grid;grid-template-columns:1fr;gap:5mm}.service{display:grid;grid-template-columns:auto 1fr;gap:5mm;align-items:start;background:#fff;border:1px solid #e2e4df;border-radius:15px;padding:6mm}.num{width:30px;height:30px;border-radius:9px;background:#e7eee9;color:#284d3f;display:flex;align-items:center;justify-content:center;font:800 10px Arial}.service h3{font-size:11px;margin:0}.service .en-title{font:bold 9px Arial;color:#284d3f;margin-top:1mm;direction:ltr;text-align:left}.service p{font-size:8px;line-height:1.8;color:#6c7972;margin:3mm 0 0}
+.contact-grid{display:grid;grid-template-columns:1fr;gap:6mm;margin-top:7mm}.contact-card{background:#20372f;color:#fff;border-radius:20px;padding:10mm}.contact-card h2{font-size:21px;line-height:1.55;margin:0}.contact-card .en-title{font:bold 16px Arial;color:#d5e4dd;margin-top:2mm;direction:ltr;text-align:left}.contact-card p{font-size:8.8px;line-height:1.95;color:#c2d0ca;margin:6mm 0 0}.contact-links{background:#fff;border:1px solid #e1e4df;border-radius:18px;padding:7mm}.contact-links h3{font-size:12px;margin:0}.contact-links a{display:block;margin-top:4mm;background:#edf3ef;color:#284d3f;border-radius:9px;padding:7px 9px;font:700 8.5px Arial;direction:ltr;text-align:left}
+</style>
+</head>
+<body>
+<section class="page" id="home">
+<header class="header"><a class="brand" href="#home"><span class="mark">N</span>NOVA Living</a><nav class="nav"><a class="active" href="#home">Home</a><a href="#products">Products</a><a href="#story">Story</a><a href="#services">Services</a><a href="#contact">Contact</a></nav></header>
+<div class="hero"><div class="hero-grid"><div class="hero-copy"><span class="eyebrow">Product catalog sample</span><h1>Quiet spaces. <b>Timeless design.</b></h1><p>NOVA is a fictional interior brand created to demonstrate a realistic digital catalog with products, brand story, services, and contact actions connected through website-like navigation.</p><div class="actions"><a class="btn primary" href="#products">View products</a><a class="btn soft" href="#story">Our story</a></div></div><div class="hero-visual"><div class="room"><div class="sofa"><i></i></div><div class="lamp"><span></span></div></div><div class="stats"><div class="stat"><b>24</b><small>Products</small></div><div class="stat"><b>7</b><small>Collections</small></div><div class="stat"><b>2Y</b><small>Warranty</small></div></div></div></div></div>
+<div class="footer"><span>NOVA Living - Sample catalog</span><span>01 / 05</span></div>
+</section>
+
+<section class="page" id="products">
+<header class="header"><a class="brand" href="#home"><span class="mark">N</span>NOVA Living</a><nav class="nav"><a href="#home">Home</a><a class="active" href="#products">Products</a><a href="#story">Story</a><a href="#services">Services</a><a href="#contact">Contact</a></nav></header>
+<div class="section"><div class="section-head"><span class="eyebrow">Products</span><h2>Selected pieces from the Quiet Home collection</h2></div><div class="product-grid">
+<article class="product"><div class="product-art"><div class="chair"><div class="back"></div><div class="seat"></div></div></div><div class="product-body"><h3>ARA Lounge Chair</h3><p>Soft form, deep seating, and warm wooden legs for calm contemporary interiors.</p><div class="meta"><span class="price">$420</span><a href="#contact">Enquire →</a></div></div></article>
+<article class="product"><div class="product-art"><div class="table"></div></div><div class="product-body"><h3>MESA Side Table</h3><p>Natural wood surface with a light profile for living rooms, lounges, or bedrooms.</p><div class="meta"><span class="price">$180</span><a href="#contact">Enquire →</a></div></div></article>
+<article class="product"><div class="product-art"><div class="vase"></div></div><div class="product-body"><h3>KHAK Ceramic Vase</h3><p>A handcrafted silhouette and warm tone that adds texture to minimal spaces.</p><div class="meta"><span class="price">$95</span><a href="#contact">Enquire →</a></div></div></article>
+<article class="product"><div class="product-art"><div class="shelf"></div></div><div class="product-body"><h3>KHAT Open Shelf</h3><p>A simple open structure for books, objects, and personal collections.</p><div class="meta"><span class="price">$310</span><a href="#contact">Enquire →</a></div></div></article>
+</div></div><div class="footer"><span><a href="#home">Home</a> · <a href="#story">Next: Story</a></span><span>02 / 05</span></div>
+</section>
+
+<section class="page" id="story">
+<header class="header"><a class="brand" href="#home"><span class="mark">N</span>NOVA Living</a><nav class="nav"><a href="#home">Home</a><a href="#products">Products</a><a class="active" href="#story">Story</a><a href="#services">Services</a><a href="#contact">Contact</a></nav></header>
+<div class="section"><div class="section-head"><span class="eyebrow">Our story</span><h2>Designed for everyday living, not just display.</h2></div><div class="story-grid"><div class="story-card dark"><h3>Less, but better</h3><p>This sample story explains why the products use specific forms, colors, and materials. The page is designed to build trust and emotional context before a buying decision.</p></div><div class="story-card"><h3>Materials you can feel</h3><p>A material section can deliver short, scannable information that works well on both mobile and desktop.</p><div class="material-row"><div class="material"><b>Oak wood</b><span>Natural grain</span></div><div class="material"><b>Natural textile</b><span>Soft touch</span></div><div class="material"><b>Ceramic</b><span>Hand-finished</span></div></div></div></div></div>
+<div class="footer"><span><a href="#products">Products</a> · <a href="#services">Next: Services</a></span><span>03 / 05</span></div>
+</section>
+
+<section class="page" id="services">
+<header class="header"><a class="brand" href="#home"><span class="mark">N</span>NOVA Living</a><nav class="nav"><a href="#home">Home</a><a href="#products">Products</a><a href="#story">Story</a><a class="active" href="#services">Services</a><a href="#contact">Contact</a></nav></header>
+<div class="section"><div class="section-head"><span class="eyebrow">Services</span><h2>A simple path from selection to delivery.</h2></div><div class="service-grid"><article class="service"><div class="num">01</div><div><h3>Selection consultation</h3><p>Guidance on product choice, colors, and combinations based on the scale and style of your space.</p></div></article><article class="service"><div class="num">02</div><div><h3>Customization</h3><p>Limited adjustments to materials, colors, and dimensions for special projects or commercial orders.</p></div></article><article class="service"><div class="num">03</div><div><h3>Delivery & installation</h3><p>Coordinated delivery and installation for a smoother experience from order to everyday use.</p></div></article><article class="service"><div class="num">04</div><div><h3>After-sales support</h3><p>Quick access to warranty details, care instructions, and support after purchase.</p></div></article></div><div class="actions"><a class="btn primary" href="#contact">Request consultation</a><a class="btn soft" href="#products">View products</a></div></div>
+<div class="footer"><span><a href="#story">Story</a> · <a href="#contact">Next: Contact</a></span><span>04 / 05</span></div>
+</section>
+
+<section class="page" id="contact">
+<header class="header"><a class="brand" href="#home"><span class="mark">N</span>NOVA Living</a><nav class="nav"><a href="#home">Home</a><a href="#products">Products</a><a href="#story">Story</a><a href="#services">Services</a><a class="active" href="#contact">Contact</a></nav></header>
+<div class="section"><div class="section-head"><span class="eyebrow">Contact</span><h2>Ready when you are.</h2></div><div class="contact-grid"><div class="contact-card"><h2>The catalog is not the end - it starts the conversation.</h2><p>This page demonstrates how a real product catalog can guide a reader from brand and product discovery toward contact, a website, or a consultation request.</p><div class="actions"><a class="btn primary" href="#home">Back home</a><a class="btn soft" href="#products">Products</a></div></div><div class="contact-links"><h3>Sample actions</h3><a href="https://badje.ir">Website: https://badje.ir</a><a href="mailto:hello@badje.ir">Email: hello@badje.ir</a><a href="#products">Internal: Product page</a><a href="#home">Internal: Home</a></div></div></div>
+<div class="footer"><span>NOVA Living - Fictional sample</span><span>05 / 05</span></div>
+</section>
+</body></html>

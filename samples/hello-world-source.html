@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hello World - Interactive Catalog</title>
+<style>
+@page { size: A4 portrait; margin: 0; }
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; color:#14231e; font-family: Arial, Helvetica, sans-serif; }
+a { color: inherit; text-decoration: none; }
+.page { width:210mm; height:297mm; padding:12mm 13mm 11mm; position:relative; overflow:hidden; page-break-after:always; background:#fbfcfb; }
+.page:last-child { page-break-after:auto; }
+.header { height:14mm; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #dfe8e3; }
+.brand { display:flex; align-items:center; gap:8px; font-weight:800; font-size:12px; }
+.logo { width:28px; height:28px; border-radius:10px; background:#1f6a4f; color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:900; }
+.nav { display:flex; gap:14px; font-size:9px; color:#50625b; }
+.nav a { padding:5px 0; border-bottom:2px solid transparent; }
+.nav a.active { color:#1f6a4f; border-color:#1f6a4f; font-weight:700; }
+.hero { min-height:246mm; display:grid; grid-template-rows:auto 1fr auto; }
+.pill { display:inline-flex; align-items:center; gap:6px; color:#1f6a4f; background:#eaf4ef; border-radius:999px; padding:6px 10px; font-size:8.5px; font-weight:700; margin-top:12mm; }
+.hero-main { display:grid; grid-template-columns:1fr; align-items:center; gap:10mm; margin-top:10mm; }
+.hero-card { background:#fff; border:1px solid #e3ebe7; border-radius:18px; padding:12mm; box-shadow:0 10px 28px rgba(16,44,33,.05); }
+.kicker { color:#1f6a4f; font-size:10px; font-weight:700; }
+h1 { margin:6mm 0 0; font-size:30px; line-height:1.25; letter-spacing:-.6px; }
+h1 span { color:#1f6a4f; }
+.lead { font-size:10.5px; line-height:1.9; color:#64756d; margin:7mm 0 0; max-width:165mm; }
+.actions { display:flex; gap:8px; margin-top:9mm; flex-wrap:wrap; }
+.btn { display:inline-block; border-radius:10px; padding:8px 13px; font-size:9px; font-weight:700; }
+.btn.primary { background:#1f6a4f; color:#fff; }
+.btn.soft { background:#eaf4ef; color:#164d3a; }
+.preview-grid { display:grid; grid-template-columns:1.1fr .9fr; gap:8mm; margin-top:10mm; }
+.feature-box { background:linear-gradient(145deg,#f8faf9,#eef5f1); border:1px solid #e2ebe6; border-radius:16px; padding:8mm; min-height:70mm; }
+.feature-box h3 { margin:0; font-size:14px; }
+.feature-box p { margin:4mm 0 0; font-size:9px; line-height:1.85; color:#66776f; }
+.mini-browser { background:#16261f; border-radius:18px; padding:7px; min-height:70mm; }
+.mini-head { height:8mm; border-radius:11px 11px 0 0; background:#263a31; display:flex; align-items:center; gap:4px; padding:0 8px; }
+.mini-head i { width:6px; height:6px; border-radius:50%; background:#70867b; display:block; }
+.mini-screen { background:#fff; border-radius:0 0 11px 11px; min-height:52mm; padding:8mm; }
+.mini-screen strong { display:block; font-size:13px; }
+.mini-screen small { display:block; margin-top:2mm; color:#6a7972; font-size:8px; }
+.section { padding-top:10mm; }
+.section-head { margin:10mm 0 8mm; }
+.section-head .label { color:#1f6a4f; font-size:9px; font-weight:700; }
+.section-head h2 { margin:2mm 0 0; font-size:22px; line-height:1.4; }
+.section-head p { margin:3mm 0 0; font-size:9px; color:#687972; line-height:1.8; }
+.cards { display:grid; grid-template-columns:1fr; gap:6mm; }
+.card { background:#fff; border:1px solid #e2ebe6; border-radius:16px; padding:8mm; }
+.card-head { display:flex; align-items:center; gap:10px; }
+.icon { width:34px; height:34px; border-radius:11px; background:#eaf4ef; color:#1f6a4f; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; }
+.card h3 { margin:0; font-size:13px; }
+.card p { margin:4mm 0 0; font-size:9px; line-height:1.9; color:#697a72; }
+.card a { display:inline-block; margin-top:5mm; color:#1f6a4f; font-size:9px; font-weight:700; }
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:8mm; }
+.story { background:#fff; border:1px solid #e2ebe6; border-radius:18px; padding:10mm; min-height:92mm; }
+.story h3 { margin:0; font-size:18px; line-height:1.5; }
+.story p { margin:6mm 0 0; font-size:9px; line-height:1.95; color:#687972; }
+.gallery { display:grid; grid-template-columns:1fr 1fr; gap:4mm; }
+.tile { min-height:44mm; border-radius:14px; background:linear-gradient(145deg,#edf5f1,#f8f1e7); border:1px solid #e5ece8; display:flex; align-items:flex-end; padding:5mm; }
+.tile strong { font-size:10px; }
+.contact-wrap { display:grid; grid-template-columns:1fr; gap:8mm; margin-top:8mm; }
+.contact-card { background:#16261f; color:#fff; border-radius:20px; padding:10mm; }
+.contact-card h2 { margin:0; font-size:22px; line-height:1.5; }
+.contact-card p { margin:5mm 0 0; color:#b9c6c0; font-size:9px; line-height:1.9; }
+.contact-panel { background:#fff; border:1px solid #e2ebe6; border-radius:18px; padding:8mm; }
+.contact-panel b { display:block; font-size:12px; }
+.contact-panel span { display:block; color:#708078; font-size:8px; margin-top:2mm; }
+.contact-panel a { display:block; margin-top:5mm; background:#eaf4ef; border-radius:10px; padding:7px 9px; color:#1f6a4f; font-size:9px; font-weight:700; }
+.footer-note { position:absolute; bottom:6mm; left:13mm; right:13mm; display:flex; justify-content:space-between; color:#8a9891; font-size:8px; }
+.small-links { display:flex; gap:8px; flex-wrap:wrap; }
+.small-links a { color:#1f6a4f; }
+</style>
+</head>
+<body>
+<section class="page" id="home">
+  <header class="header">
+    <a class="brand" href="#home"><span class="logo">H</span><span>Hello World</span></a>
+    <nav class="nav"><a class="active" href="#home">Home</a><a href="#features">Features</a><a href="#sections">Sections</a><a href="#contact">Contact</a></nav>
+  </header>
+  <div class="hero">
+    <span class="pill">Interactive sample catalog</span>
+    <div class="hero-main">
+      <div class="hero-card">
+        <div class="kicker">Interactive e-catalog</div>
+        <h1>A PDF that feels like a <span>small website.</span></h1>
+        <p class="lead">This sample is designed to test a digital e-catalog workflow: persistent header navigation, internal page jumps, external links, clear sections, and a website-like layout that remains inside the PDF.</p>
+        <div class="actions"><a class="btn primary" href="#features">Explore features</a><a class="btn soft" href="https://badje.ir">Visit badje.ir</a></div>
+      </div>
+      <div class="preview-grid">
+        <div class="feature-box"><h3>Mobile-friendly A4 portrait</h3><p>The portrait format is easier to browse on narrow screens while still looking polished on desktop. Each page behaves like a focused website section.</p></div>
+        <div class="mini-browser"><div class="mini-head"><i></i><i></i><i></i></div><div class="mini-screen"><strong>Hello World</strong><small>Interactive A4 portrait catalog</small></div></div>
+      </div>
+    </div>
+    <div class="footer-note"><span>hello-world.pdf</span><span>01 / 04</span></div>
+  </div>
+</section>
+
+<section class="page" id="features">
+  <header class="header"><a class="brand" href="#home"><span class="logo">H</span><span>Hello World</span></a><nav class="nav"><a href="#home">Home</a><a class="active" href="#features">Features</a><a href="#sections">Sections</a><a href="#contact">Contact</a></nav></header>
+  <div class="section">
+    <div class="section-head"><div class="label">Features</div><h2>Built for viewing, sharing, and guiding the reader.</h2><p>Every navigation item and action button in this sample is designed to behave like part of a compact website experience.</p></div>
+    <div class="cards">
+      <article class="card"><div class="card-head"><div class="icon">01</div><h3>Internal navigation</h3></div><p>Header items and action buttons can jump directly to other sections inside the same PDF.</p><a href="#sections">Open sections →</a></article>
+      <article class="card"><div class="card-head"><div class="icon">02</div><h3>External actions</h3></div><p>Buttons can open websites, product pages, maps, contact forms, or social destinations.</p><a href="https://badje.ir">Open website →</a></article>
+      <article class="card"><div class="card-head"><div class="icon">03</div><h3>Fixed visual design</h3></div><p>Layout, typography, colors, and images stay exactly where the catalog designer placed them.</p><a href="#contact">Contact section →</a></article>
+    </div>
+    <div class="footer-note"><span><a href="#home">Back to home</a></span><span>02 / 04</span></div>
+  </div>
+</section>
+
+<section class="page" id="sections">
+  <header class="header"><a class="brand" href="#home"><span class="logo">H</span><span>Hello World</span></a><nav class="nav"><a href="#home">Home</a><a href="#features">Features</a><a class="active" href="#sections">Sections</a><a href="#contact">Contact</a></nav></header>
+  <div class="section">
+    <div class="section-head"><div class="label">Sections</div><h2>Each page can behave like a full website section.</h2><p>Use full-page sections for product stories, collections, portfolios, menus, company profiles, or calls to action.</p></div>
+    <div class="two-col">
+      <div class="story"><h3>Product or service story</h3><p>Use this structure for a brand introduction, product range, restaurant menu, portfolio, project profile, or company catalog. The reader moves between sections without leaving the PDF.</p><div class="actions"><a class="btn primary" href="#contact">Next: Contact</a><a class="btn soft" href="#features">Back to features</a></div></div>
+      <div class="gallery"><div class="tile"><strong>Hero section</strong></div><div class="tile"><strong>Product grid</strong></div><div class="tile"><strong>Story block</strong></div><div class="tile"><strong>Call to action</strong></div></div>
+    </div>
+    <div class="footer-note"><span class="small-links"><a href="#home">Home</a><a href="#features">Features</a><a href="#contact">Contact</a></span><span>03 / 04</span></div>
+  </div>
+</section>
+
+<section class="page" id="contact">
+  <header class="header"><a class="brand" href="#home"><span class="logo">H</span><span>Hello World</span></a><nav class="nav"><a href="#home">Home</a><a href="#features">Features</a><a href="#sections">Sections</a><a class="active" href="#contact">Contact</a></nav></header>
+  <div class="section">
+    <div class="contact-wrap">
+      <div class="contact-card"><h2>Let the catalog itself be the experience.</h2><p>This final page demonstrates direct actions. In a real catalog these could point to your website, social profile, WhatsApp, a product page, or another PDF page.</p><div class="actions"><a class="btn primary" href="#home">Return home</a><a class="btn soft" href="#sections">Previous section</a></div></div>
+      <div class="contact-panel"><b>Try the links</b><span>These are real PDF hyperlinks.</span><a href="https://badje.ir">https://badje.ir</a><a href="mailto:hello@badje.ir">hello@badje.ir</a><a href="#home">Internal link: Home</a></div>
+    </div>
+    <div class="footer-note"><span>Hello World interactive sample</span><span>04 / 04</span></div>
+  </div>
+</section>
+</body>
+</html>
