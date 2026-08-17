@@ -1,0 +1,68 @@
+name: Publish source tree
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  publish-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify project archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat \
+            .bootstrap/fix-000a.txt \
+            .bootstrap/fix-000b.txt \
+            .bootstrap/chunk-001.txt \
+            .bootstrap/chunk-002.txt \
+            .bootstrap/chunk-003.txt \
+            .bootstrap/chunk-004.txt \
+            .bootstrap/fix-005a.txt \
+            .bootstrap/fix-005b.txt \
+            .bootstrap/chunk-006.txt \
+            .bootstrap/chunk-007.txt \
+            .bootstrap/chunk-008.txt \
+            .bootstrap/chunk-009.txt \
+            .bootstrap/chunk-010.txt \
+            .bootstrap/final-011a.txt \
+            .bootstrap/final-011b.txt \
+            .bootstrap/final-012a.txt \
+            .bootstrap/final-012b.txt \
+            .bootstrap/final-013.txt \
+            > /tmp/badje-catalog.b64
+
+          base64 --decode /tmp/badje-catalog.b64 > /tmp/badje-catalog.zip
+          echo "408a49d71eb4395e23af1137d5000bed69812ca065597e4f753d7f8a989eb432  /tmp/badje-catalog.zip" | sha256sum -c -
+          unzip -tq /tmp/badje-catalog.zip
+
+          rm -rf /tmp/badje-catalog-import
+          mkdir -p /tmp/badje-catalog-import
+          unzip -q /tmp/badje-catalog.zip -d /tmp/badje-catalog-import
+
+          test -f /tmp/badje-catalog-import/badje-catalog/package.json
+          test -f /tmp/badje-catalog-import/badje-catalog/components/AdminDashboard.tsx
+          test -f /tmp/badje-catalog-import/badje-catalog/pdf-engine/generate.py
+          test -f /tmp/badje-catalog-import/badje-catalog/app/api/admin/catalogs/[id]/regenerate/route.ts
+
+      - name: Replace staging files with real project source
+        shell: bash
+        run: |
+          set -euo pipefail
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a /tmp/badje-catalog-import/badje-catalog/. .
+
+          git config user.name "Tooraj Valaee"
+          git config user.email "tooraj.valaee@live.com"
+          git add -A
+          git commit -m "Publish Badje Catalog v3.2.0 source"
+          git push origin HEAD:main
