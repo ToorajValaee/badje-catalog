@@ -1,16 +1,29 @@
 import Link from 'next/link';
+import { headers } from 'next/headers';
+import QRCode from 'qrcode';
 import { ArrowLeft, CheckCircle2, QrCode, Smartphone, UploadCloud } from 'lucide-react';
 
-export default function LandingPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function LandingPage() {
+  const requestHeaders = await headers();
+  const host = requestHeaders.get('x-forwarded-host') || requestHeaders.get('host') || 'catalog.badje.ir';
+  const proto = requestHeaders.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
+  const helloWorldUrl = `${proto}://${host}/hello-world`;
+  const helloWorldQr = await QRCode.toDataURL(helloWorldUrl, {
+    width: 240,
+    margin: 1,
+    errorCorrectionLevel: 'M',
+  });
+
   return <>
     <header className="siteHeader container">
       <Link className="brand" href="/">
         <img src="/img/logo-mark.svg" width="44" height="44" alt="" />
-        <span><strong>کاتالوگ دیجیتال</strong><small>BADJE</small></span>
+        <span><strong>Publio</strong><small>POWERED BY BADJE.IR</small></span>
       </Link>
       <nav className="headerActions">
         <a className="textLink" href="#services">خدمات</a>
-        <Link className="btn btnGhost" href="/admin/login">ورود مدیر</Link>
       </nav>
     </header>
 
@@ -43,12 +56,15 @@ export default function LandingPage() {
           <article className="serviceCard">
             <UploadCloud/>
             <h3>آدرس اختصاصی</h3>
-            <p>هر کاتالوگ با یک آدرس کوتاه و ساده مثل <bdi>/hello-world</bdi> منتشر می‌شود.</p>
+            <p>هر کاتالوگ با یک آدرس کوتاه و ساده منتشر می‌شود؛ برای نمونه <Link href="/hello-world"><bdi>{helloWorldUrl}</bdi></Link>.</p>
           </article>
           <article className="serviceCard featured">
             <QrCode/>
             <h3>QR Code آماده</h3>
-            <p>QR کاتالوگ را روی بسته‌بندی، کارت ویزیت، بروشور یا تبلیغات چاپ کنید.</p>
+            <p>این QR نمونه مستقیماً به <Link href="/hello-world"><bdi>{helloWorldUrl}</bdi></Link> می‌رود.</p>
+            <Link href="/hello-world" aria-label="باز کردن نمونه hello-world">
+              <img className="sampleQr" src={helloWorldQr} width="200" height="200" alt={`QR Code برای ${helloWorldUrl}`} />
+            </Link>
           </article>
           <article className="serviceCard">
             <Smartphone/>
@@ -79,14 +95,14 @@ export default function LandingPage() {
             <div className="eyebrow">آماده انتشار هستید؟</div>
             <h2>یک لینک کوتاه. یک QR. یک کاتالوگ همیشه در دسترس.</h2>
           </div>
-          <a className="btn btnPrimary" href="mailto:hello@badje.ir">درخواست طراحی کاتالوگ</a>
+          <a className="btn btnPrimary" href="mailto:publio@badje.ir">درخواست طراحی کاتالوگ</a>
         </div>
       </section>
     </main>
 
     <footer className="footer container">
-      <div className="brand"><img src="/img/logo-mark.svg" width="34" height="34" alt=""/><span><strong>کاتالوگ دیجیتال بادجه</strong><small>BADJE</small></span></div>
-      <p>طراحی و انتشار کاتالوگ دیجیتال حرفه‌ای</p>
+      <div className="brand"><img src="/img/logo-mark.svg" width="34" height="34" alt=""/><span><strong>Publio</strong><small>POWERED BY BADJE.IR</small></span></div>
+      <p>طراحی و انتشار کاتالوگ دیجیتال حرفه‌ای · <a href="https://badje.ir" target="_blank" rel="noreferrer">Powered by badje.ir</a></p>
     </footer>
   </>;
 }
