@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './static-catalog.css';
 
 export const metadata: Metadata = {
   title: { default: 'کاتالوگ دیجیتال بادجه', template: '%s | بادجه' },
