@@ -19,7 +19,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!current) return NextResponse.json({ error: 'کاتالوگ پیدا نشد.' }, { status: 404 });
 
     const settings = renderSettingsFromSearchParams(request.nextUrl.searchParams, renderSettingsForCatalog(current));
-    const manifest = await regenerateCatalogWeb(id, settings);
+    const progressJob = request.nextUrl.searchParams.get('progressJob') || undefined;
+    const manifest = await regenerateCatalogWeb(id, settings, progressJob);
     const generatedAt = new Date();
 
     await db().update(catalogs).set({
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (message === 'SOURCE_PDF_MISSING') return NextResponse.json({ error: 'فایل PDF اصلی برای بازسازی پیدا نشد.' }, { status: 409 });
     if (message === 'RENDER_SETTINGS_INVALID') return NextResponse.json({ error: 'تنظیمات کیفیت خروجی معتبر نیست.' }, { status: 400 });
     if (message === 'PDF_GENERATION_FAILED') return NextResponse.json({ error: 'بازسازی نسخه وب انجام نشد. فایل PDF اصلی را بررسی کنید.' }, { status: 422 });
+    if (message === 'INVALID_PROGRESS_JOB') return NextResponse.json({ error: 'شناسه پیشرفت معتبر نیست.' }, { status: 400 });
     console.error(error);
     return NextResponse.json({ error: 'بازسازی نسخه وب انجام نشد.' }, { status: 500 });
   }
