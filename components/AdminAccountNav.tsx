@@ -1,0 +1,1 @@
+export default function AdminAccountNav(){return <div className="container" style={{paddingTop:16,display:'flex',gap:10,flexWrap:'wrap'}}><a className="btn btnSoft" href="/admin">Catalogs</a><a className="btn btnSoft" href="/admin/users">Users</a><a className="btn btnSoft" href="/admin/plans">Plans</a><a className="btn btnSoft" href="/admin/email">Email / Resend</a></div>}
