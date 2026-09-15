@@ -1,0 +1,34 @@
+.screenCatalogStatic {
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.staticCatalogScroll {
+  width: 100%;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  overflow-x: hidden;
+  line-height: 0;
+}
+
+.staticCatalogScrollPage {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  line-height: 0;
+}
+
+.staticCatalogScrollPage img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  vertical-align: top;
+}
