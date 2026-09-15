@@ -1,3 +1,3 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { clearUserSession } from '@/lib/auth';
-export async function POST(){await clearUserSession();return NextResponse.redirect(new URL('/account',process.env.NEXT_PUBLIC_BASE_URL||'http://localhost:8000'),303);}
+export async function POST(request:NextRequest){await clearUserSession();return NextResponse.redirect(new URL('/account',request.url),303);}
