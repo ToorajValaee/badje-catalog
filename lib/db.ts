@@ -30,6 +30,8 @@ export function ensureSchema() {
         original_filename text NOT NULL,
         file_size bigint NOT NULL,
         active boolean NOT NULL DEFAULT true,
+        static_pdf boolean NOT NULL DEFAULT false,
+        navigation_mode varchar(32) NOT NULL DEFAULT 'swipe-left',
         render_dpi integer NOT NULL DEFAULT 200,
         webp_quality integer NOT NULL DEFAULT 96,
         webp_lossless boolean NOT NULL DEFAULT true,
@@ -40,6 +42,8 @@ export function ensureSchema() {
         created_at timestamptz NOT NULL DEFAULT now(),
         updated_at timestamptz NOT NULL DEFAULT now()
       );
+      ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS static_pdf boolean NOT NULL DEFAULT false;
+      ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS navigation_mode varchar(32) NOT NULL DEFAULT 'swipe-left';
       ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS render_dpi integer NOT NULL DEFAULT 200;
       ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS webp_quality integer NOT NULL DEFAULT 96;
       ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS webp_lossless boolean NOT NULL DEFAULT true;
