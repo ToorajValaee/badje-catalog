@@ -1,9 +1,2 @@
 import { redirect } from 'next/navigation';
-import { isAdmin } from '@/lib/auth';
-
-export const dynamic = 'force-dynamic';
-
-export default async function AdminPage() {
-  if (!(await isAdmin())) redirect('/admin/login');
-  redirect('/admin/users');
-}
+export default function AdminPage(){redirect('/account');}
