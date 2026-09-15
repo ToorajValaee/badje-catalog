@@ -31,11 +31,6 @@ export function ensureSchema() {
           purpose varchar(24) NOT NULL DEFAULT 'login', locale varchar(2) NOT NULL DEFAULT 'en', expires_at timestamptz NOT NULL,
           consumed_at timestamptz, created_at timestamptz NOT NULL DEFAULT now()
         );
-        CREATE TABLE IF NOT EXISTS email_settings (
-          id varchar(36) PRIMARY KEY, provider varchar(32) NOT NULL DEFAULT 'resend', from_name text NOT NULL DEFAULT 'Publio',
-          from_email varchar(320) NOT NULL DEFAULT 'publio@badje.ir', reply_to varchar(320), api_key_encrypted text,
-          enabled boolean NOT NULL DEFAULT false, updated_at timestamptz NOT NULL DEFAULT now()
-        );
         CREATE TABLE IF NOT EXISTS catalogs (
           id varchar(36) PRIMARY KEY, user_id varchar(36), title text NOT NULL, slug varchar(140) NOT NULL UNIQUE,
           object_key text NOT NULL, original_filename text NOT NULL, file_size bigint NOT NULL, active boolean NOT NULL DEFAULT true,
@@ -60,8 +55,6 @@ export function ensureSchema() {
       `);
       const free = await pool().query(`SELECT id FROM plans WHERE code='free' LIMIT 1`);
       if (!free.rowCount) await pool().query(`INSERT INTO plans (id,code,name_en,name_fa,storage_limit_bytes,custom_slug,active,sort_order) VALUES ($1,'free','Free','رایگان',$2,false,true,0)`, [randomUUID(), 50 * 1024 * 1024]);
-      const mail = await pool().query(`SELECT id FROM email_settings LIMIT 1`);
-      if (!mail.rowCount) await pool().query(`INSERT INTO email_settings (id) VALUES ($1)`, [randomUUID()]);
     })();
   }
   return global.__badjeSchemaReady;
