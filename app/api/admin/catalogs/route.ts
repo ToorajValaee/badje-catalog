@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     const settings = renderSettingsFromSearchParams(request.nextUrl.searchParams);
     const staticPdf = parseStaticPdf(request.nextUrl.searchParams.get('staticPdf'));
     const navigationMode = parseStaticNavigationMode(request.nextUrl.searchParams.get('navigationMode'));
+    const progressJob = request.nextUrl.searchParams.get('progressJob') || undefined;
     if (!title) return NextResponse.json({ error: 'عنوان کاتالوگ الزامی است.' }, { status: 400 });
 
     const [duplicate] = await db().select({ id: catalogs.id }).from(catalogs).where(eq(catalogs.slug, slug)).limit(1);
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
     const pdf = await pdfStreamFromRequest(request, true);
     if (!pdf) throw new Error('PDF_REQUIRED');
 
-    const manifest = await generateCatalogFiles(id, pdf.stream, pdf.size, settings);
+    const manifest = await generateCatalogFiles(id, pdf.stream, pdf.size, settings, progressJob);
     const generatedAt = new Date();
     try {
       await db().insert(catalogs).values({
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
     if (message === 'PDF_GENERATION_FAILED') return NextResponse.json({ error: 'ساخت نسخه وب کاتالوگ انجام نشد. فایل PDF را بررسی کنید.' }, { status: 422 });
     if (message === 'RENDER_SETTINGS_INVALID') return NextResponse.json({ error: 'تنظیمات کیفیت خروجی معتبر نیست.' }, { status: 400 });
     if (message === 'NAVIGATION_MODE_INVALID') return NextResponse.json({ error: 'روش پیمایش انتخاب‌شده معتبر نیست.' }, { status: 400 });
+    if (message === 'INVALID_PROGRESS_JOB') return NextResponse.json({ error: 'شناسه پیشرفت معتبر نیست.' }, { status: 400 });
     if (message.includes('نامک')) return NextResponse.json({ error: message }, { status: 400 });
     console.error(error);
     return NextResponse.json({ error: 'ذخیره و پردازش کاتالوگ انجام نشد.' }, { status: 500 });
