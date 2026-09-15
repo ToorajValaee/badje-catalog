@@ -36,17 +36,6 @@ export const otpCodes = pgTable('otp_codes', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const emailSettings = pgTable('email_settings', {
-  id: varchar('id', { length: 36 }).primaryKey(),
-  provider: varchar('provider', { length: 32 }).notNull().default('resend'),
-  fromName: text('from_name').notNull().default('Publio'),
-  fromEmail: varchar('from_email', { length: 320 }).notNull().default('publio@badje.ir'),
-  replyTo: varchar('reply_to', { length: 320 }),
-  apiKeyEncrypted: text('api_key_encrypted'),
-  enabled: boolean('enabled').notNull().default(false),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-});
-
 export const catalogs = pgTable('catalogs', {
   id: varchar('id', { length: 36 }).primaryKey(),
   userId: varchar('user_id', { length: 36 }),
