@@ -8,7 +8,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const { error } = await searchParams;
   return <main className="authPage">
     <section className="authVisual">
-      <a className="brand lightBrand" href="/"><img src="/img/logo-mark-light.svg" alt=""/><span><strong>کاتالوگ دیجیتال بادجه</strong><small>BADJE</small></span></a>
+      <a className="brand lightBrand" href="/"><img src="/img/logo-mark-light.svg" alt=""/><span><strong>Publio</strong><small>POWERED BY BADJE.IR</small></span></a>
       <div className="authPitch"><div className="eyebrow light">پنل مدیریت</div><h1>کاتالوگ‌ها را ساده منتشر و مدیریت کنید.</h1><p>آپلود PDF، ساخت لینک اختصاصی، QR Code و مدیریت وضعیت انتشار در یک پنل.</p></div>
       <img className="authArt" src="/img/admin-banner.svg" alt=""/>
     </section>
