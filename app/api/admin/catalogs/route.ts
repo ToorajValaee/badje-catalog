@@ -10,6 +10,7 @@ import { pdfStreamFromRequest } from '@/lib/upload';
 import { deleteCatalogFiles, generateCatalogFiles, sourceFilename } from '@/lib/storage';
 import { env } from '@/lib/env';
 import { renderSettingsFromSearchParams } from '@/lib/render-settings';
+import { parseStaticNavigationMode, parseStaticPdf } from '@/lib/navigation';
 
 export const maxDuration = 300;
 
@@ -22,6 +23,8 @@ export async function POST(request: NextRequest) {
     const title = (request.nextUrl.searchParams.get('title') || '').trim();
     const slug = validateSlug(request.nextUrl.searchParams.get('slug') || '');
     const settings = renderSettingsFromSearchParams(request.nextUrl.searchParams);
+    const staticPdf = parseStaticPdf(request.nextUrl.searchParams.get('staticPdf'));
+    const navigationMode = parseStaticNavigationMode(request.nextUrl.searchParams.get('navigationMode'));
     if (!title) return NextResponse.json({ error: 'عنوان کاتالوگ الزامی است.' }, { status: 400 });
 
     const [duplicate] = await db().select({ id: catalogs.id }).from(catalogs).where(eq(catalogs.slug, slug)).limit(1);
@@ -41,6 +44,8 @@ export async function POST(request: NextRequest) {
         originalFilename: pdf.filename,
         fileSize: pdf.size,
         active: true,
+        staticPdf,
+        navigationMode,
         renderDpi: settings.renderDpi,
         webpQuality: settings.webpQuality,
         webpLossless: settings.webpLossless,
@@ -58,6 +63,8 @@ export async function POST(request: NextRequest) {
       id,
       title,
       slug,
+      staticPdf,
+      navigationMode,
       pageCount: manifest.pageCount,
       linkCount: manifest.linkCount,
       generatedSize: manifest.generatedImageBytes || 0,
@@ -71,6 +78,7 @@ export async function POST(request: NextRequest) {
     if (message === 'PDF_REQUIRED') return NextResponse.json({ error: 'انتخاب فایل PDF الزامی است.' }, { status: 400 });
     if (message === 'PDF_GENERATION_FAILED') return NextResponse.json({ error: 'ساخت نسخه وب کاتالوگ انجام نشد. فایل PDF را بررسی کنید.' }, { status: 422 });
     if (message === 'RENDER_SETTINGS_INVALID') return NextResponse.json({ error: 'تنظیمات کیفیت خروجی معتبر نیست.' }, { status: 400 });
+    if (message === 'NAVIGATION_MODE_INVALID') return NextResponse.json({ error: 'روش پیمایش انتخاب‌شده معتبر نیست.' }, { status: 400 });
     if (message.includes('نامک')) return NextResponse.json({ error: message }, { status: 400 });
     console.error(error);
     return NextResponse.json({ error: 'ذخیره و پردازش کاتالوگ انجام نشد.' }, { status: 500 });
