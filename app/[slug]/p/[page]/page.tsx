@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: { params: RouteParams }) {
   const catalog = await findCatalogBySlug(cleanSlug);
   const pageNumber = parsePage(page);
   return {
-    title: catalog && pageNumber ? `${catalog.title} — صفحه ${pageNumber}` : 'کاتالوگ پیدا نشد | بادجه',
+    title: catalog && pageNumber ? `${catalog.title} — صفحه ${pageNumber}` : 'کاتالوگ پیدا نشد | Publio',
   };
 }
 
