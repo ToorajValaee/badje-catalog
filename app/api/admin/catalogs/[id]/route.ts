@@ -33,6 +33,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const navigationMode = parseStaticNavigationMode(request.nextUrl.searchParams.get('navigationMode'), current.navigationMode as any);
     const settings = renderSettingsFromSearchParams(request.nextUrl.searchParams, renderSettingsForCatalog(current));
     const regenerate = request.nextUrl.searchParams.get('regenerate') === 'true';
+    const progressJob = request.nextUrl.searchParams.get('progressJob') || undefined;
     if (!title) return NextResponse.json({ error: 'عنوان کاتالوگ الزامی است.' }, { status: 400 });
 
     const [duplicate] = await db().select({ id: catalogs.id }).from(catalogs).where(eq(catalogs.slug, slug)).limit(1);
@@ -49,7 +50,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     let didGenerate = false;
 
     if (pdf) {
-      const manifest = await generateCatalogFiles(id, pdf.stream, pdf.size, settings);
+      const manifest = await generateCatalogFiles(id, pdf.stream, pdf.size, settings, progressJob);
       originalFilename = pdf.filename;
       fileSize = pdf.size;
       objectKey = sourceFilename(id);
@@ -59,7 +60,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       generatedAt = new Date();
       didGenerate = true;
     } else if (regenerate) {
-      const manifest = await regenerateCatalogWeb(id, settings);
+      const manifest = await regenerateCatalogWeb(id, settings, progressJob);
       pageCount = manifest.pageCount;
       linkCount = manifest.linkCount;
       generatedSize = manifest.generatedImageBytes || 0;
@@ -107,6 +108,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (message === 'SOURCE_PDF_MISSING') return NextResponse.json({ error: 'فایل PDF اصلی برای بازسازی پیدا نشد.' }, { status: 409 });
     if (message === 'RENDER_SETTINGS_INVALID') return NextResponse.json({ error: 'تنظیمات کیفیت خروجی معتبر نیست.' }, { status: 400 });
     if (message === 'NAVIGATION_MODE_INVALID') return NextResponse.json({ error: 'روش پیمایش انتخاب‌شده معتبر نیست.' }, { status: 400 });
+    if (message === 'INVALID_PROGRESS_JOB') return NextResponse.json({ error: 'شناسه پیشرفت معتبر نیست.' }, { status: 400 });
     if (message.includes('نامک')) return NextResponse.json({ error: message }, { status: 400 });
     console.error(error);
     return NextResponse.json({ error: 'ویرایش کاتالوگ انجام نشد.' }, { status: 500 });
