@@ -3,8 +3,6 @@ import { z } from 'zod';
 const schema = z.object({
   DATABASE_URL: z.string().min(1),
   UPLOAD_DIR: z.string().min(1).default('/data/uploads'),
-  ADMIN_USERNAME: z.string().min(1).default('admin'),
-  ADMIN_PASSWORD: z.string().min(8),
   SESSION_SECRET: z.string().min(32),
   COOKIE_SECURE: z.enum(['true', 'false']).default('true'),
   MAX_UPLOAD_MB: z.coerce.number().int().positive().max(2048).default(200),
