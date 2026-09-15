@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const cleanSlug = normalizeSlug(slug);
   const catalog = await findCatalogBySlug(cleanSlug);
-  return { title: catalog ? catalog.title : 'کاتالوگ پیدا نشد | بادجه' };
+  return { title: catalog ? catalog.title : 'کاتالوگ پیدا نشد | Publio' };
 }
 
 export default async function CatalogPage({ params }: { params: Promise<{ slug: string }> }) {
