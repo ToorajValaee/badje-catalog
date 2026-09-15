@@ -29,6 +29,12 @@ type CatalogItem = {
 type RenderDefaults = { renderDpi: number; webpQuality: number; webpLossless: boolean };
 type Modal = { type: 'create' } | { type: 'edit'; item: CatalogItem } | { type: 'qr'; item: CatalogItem } | null;
 type Phase = 'idle' | 'uploading' | 'processing' | 'regenerating';
+type ProgressPayload = {
+  stage: 'waiting' | 'receiving' | 'preparing' | 'rendering' | 'finalizing' | 'complete' | 'failed';
+  percent: number;
+  current: number;
+  total: number;
+};
 
 function formatBytes(n: number) {
   if (!n) return '0 KB';
@@ -82,6 +88,7 @@ export default function AdminDashboard({
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState<Phase>('idle');
   const [progress, setProgress] = useState(0);
+  const [progressDetail, setProgressDetail] = useState('');
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -106,17 +113,56 @@ export default function AdminDashboard({
     return item.renderDpi !== renderDpi || item.webpQuality !== webpQuality || item.webpLossless !== webpLossless;
   }
 
+  function beginGenerationPolling(job: string, targetPhase: 'processing' | 'regenerating') {
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/admin/catalogs/progress?job=${encodeURIComponent(job)}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json() as ProgressPayload;
+          if (data.stage !== 'waiting' && data.stage !== 'receiving') {
+            setPhase(targetPhase);
+            setProgress(Math.max(0, Math.min(100, data.percent || 0)));
+            if (data.stage === 'rendering' && data.total > 0) {
+              setProgressDetail(`صفحه ${data.current} از ${data.total} · ${data.percent}٪`);
+            } else if (data.stage === 'preparing') {
+              setProgressDetail('در حال آماده‌سازی PDF…');
+            } else if (data.stage === 'finalizing') {
+              setProgressDetail(`در حال نهایی‌سازی… ${data.percent}٪`);
+            } else if (data.stage === 'complete') {
+              setProgressDetail('نسخه وب آماده شد.');
+            }
+          }
+        }
+      } catch {
+        // The main upload/request reports the actual error. Progress polling is best-effort.
+      } finally {
+        if (!stopped) timer = setTimeout(poll, 350);
+      }
+    };
+
+    void poll();
+    return () => {
+      stopped = true;
+      if (timer) clearTimeout(timer);
+    };
+  }
+
   async function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
     setBusy(true);
     setPhase(selectedFile ? 'uploading' : 'processing');
     setProgress(0);
+    setProgressDetail('');
     const form = new FormData(e.currentTarget);
     const title = String(form.get('title') || '').trim();
     const slug = String(form.get('slug') || '').trim();
     const active = form.get('active') === 'on';
     const file = selectedFile;
+    let stopProgress: (() => void) | undefined;
 
     try {
       if (modal?.type === 'create' && !file) throw new Error('انتخاب فایل PDF الزامی است.');
@@ -124,6 +170,10 @@ export default function AdminDashboard({
 
       const mustRegenerate = modal?.type === 'edit' && !file && settingsChanged(modal.item);
       if (mustRegenerate) setPhase('regenerating');
+      const progressJob = crypto.randomUUID();
+      if (file || mustRegenerate || modal?.type === 'create') {
+        stopProgress = beginGenerationPolling(progressJob, mustRegenerate ? 'regenerating' : 'processing');
+      }
       const qs = new URLSearchParams({
         title,
         slug,
@@ -132,10 +182,17 @@ export default function AdminDashboard({
         navigationMode,
         ...qualityParams(),
         regenerate: String(mustRegenerate),
+        progressJob,
       });
 
       if (modal?.type === 'create') {
-        const created = await upload('POST', `/api/admin/catalogs?${qs}`, file, setProgress, () => setPhase('processing'));
+        const created = await upload('POST', `/api/admin/catalogs?${qs}`, file, setProgress, () => {
+          setPhase('processing');
+          setProgress(0);
+          setProgressDetail('در حال شروع ساخت نسخه وب…');
+        });
+        setProgress(100);
+        setProgressDetail('نسخه وب آماده شد.');
         router.refresh();
         setSelectedFile(null);
         setModal({
@@ -162,7 +219,17 @@ export default function AdminDashboard({
           },
         });
       } else if (modal?.type === 'edit') {
-        await upload('PUT', `/api/admin/catalogs/${modal.item.id}?${qs}`, file, setProgress, () => setPhase(mustRegenerate ? 'regenerating' : 'processing'));
+        await upload('PUT', `/api/admin/catalogs/${modal.item.id}?${qs}`, file, setProgress, () => {
+          if (file || mustRegenerate) {
+            setPhase(mustRegenerate ? 'regenerating' : 'processing');
+            setProgress(0);
+            setProgressDetail('در حال شروع ساخت نسخه وب…');
+          }
+        });
+        if (file || mustRegenerate) {
+          setProgress(100);
+          setProgressDetail('نسخه وب آماده شد.');
+        }
         setSelectedFile(null);
         setModal(null);
         router.refresh();
@@ -170,6 +237,7 @@ export default function AdminDashboard({
     } catch (err) {
       setError(err instanceof Error ? err.message : 'خطا در ذخیره کاتالوگ');
     } finally {
+      stopProgress?.();
       setBusy(false);
       setPhase('idle');
     }
@@ -181,11 +249,16 @@ export default function AdminDashboard({
     setBusy(true);
     setPhase('regenerating');
     setProgress(0);
+    setProgressDetail('در حال شروع بازسازی…');
+    const progressJob = crypto.randomUUID();
+    const stopProgress = beginGenerationPolling(progressJob, 'regenerating');
     try {
-      const qs = new URLSearchParams(qualityParams());
+      const qs = new URLSearchParams({ ...qualityParams(), progressJob });
       const res = await fetch(`/api/admin/catalogs/${modal.item.id}/regenerate?${qs}`, { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'بازسازی انجام نشد.');
+      setProgress(100);
+      setProgressDetail('نسخه وب آماده شد.');
       const updated: CatalogItem = {
         ...modal.item,
         renderDpi: data.renderDpi,
@@ -202,6 +275,7 @@ export default function AdminDashboard({
     } catch (err) {
       setError(err instanceof Error ? err.message : 'بازسازی نسخه وب انجام نشد.');
     } finally {
+      stopProgress();
       setBusy(false);
       setPhase('idle');
     }
@@ -231,6 +305,7 @@ export default function AdminDashboard({
   function openCreate() {
     setError('');
     setProgress(0);
+    setProgressDetail('');
     setSelectedFile(null);
     setStaticPdf(false);
     setNavigationMode('swipe-left');
@@ -243,6 +318,7 @@ export default function AdminDashboard({
   function openEdit(item: CatalogItem) {
     setError('');
     setProgress(0);
+    setProgressDetail('');
     setSelectedFile(null);
     setStaticPdf(item.staticPdf);
     setNavigationMode(item.navigationMode);
@@ -257,6 +333,7 @@ export default function AdminDashboard({
     setSelectedFile(null);
     setError('');
     setProgress(0);
+    setProgressDetail('');
     setPhase('idle');
     setModal(null);
   }
@@ -266,12 +343,12 @@ export default function AdminDashboard({
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
-  const progressText = phase === 'regenerating'
-    ? 'در حال بازسازی نسخه وب از PDF اصلی…'
-    : phase === 'processing'
-      ? 'در حال ساخت نسخه وب…'
-      : progress
-        ? `${progress}٪ آپلود`
+  const progressText = phase === 'uploading'
+    ? `${progress}٪ آپلود PDF`
+    : phase === 'regenerating'
+      ? `بازسازی نسخه وب${progressDetail ? ` — ${progressDetail}` : ''}`
+      : phase === 'processing'
+        ? `ساخت نسخه وب${progressDetail ? ` — ${progressDetail}` : ''}`
         : 'در حال ذخیره…';
 
   return <div className="adminPage">
@@ -307,7 +384,7 @@ export default function AdminDashboard({
         {selectedFile ? <div className="selectedFileCard"><div className="currentFileIcon selected"><Check/></div><div className="currentFileMeta"><span>{modal.type === 'edit' ? 'PDF اصلی جایگزین می‌شود' : 'PDF اصلی انتخاب شد'}</span><strong dir="ltr">{selectedFile.name}</strong><small>{formatBytes(selectedFile.size)}</small></div><button type="button" className="removeSelectedFile" onClick={clearSelectedFile} aria-label="حذف فایل انتخاب‌شده"><Trash2/></button></div> : <label className="uploadBox"><UploadCloud/><strong>{modal.type==='create'?'فایل PDF را انتخاب کنید':'برای جایگزینی PDF اصلی، فایل جدید انتخاب کنید'}</strong><span>حداکثر {maxUploadMb} MB</span><input ref={fileInputRef} name="pdf" type="file" accept="application/pdf,.pdf" required={modal.type==='create'} onChange={event => setSelectedFile(event.target.files?.[0] || null)}/></label>}
         {selectedFile && <label className="replaceSelectedBtn"><UploadCloud/> انتخاب فایل دیگر<input name="pdfReplacement" type="file" accept="application/pdf,.pdf" onChange={event => setSelectedFile(event.target.files?.[0] || null)}/></label>}
       </div>
-      {busy && <div className="progress"><div style={{width:`${phase === 'uploading' ? Math.max(progress, 8) : 100}%`}}/><span>{progressText}</span></div>}
+      {busy && <div className="progress"><div style={{width:`${Math.max(progress, 2)}%`}}/><span>{progressText}</span></div>}
       <button className="btn btnPrimary full" type="submit" disabled={busy}>{busy?'در حال انجام…': modal.type === 'edit' && !selectedFile && settingsChanged(modal.item) ? 'ذخیره و بازسازی نسخه وب' : 'ذخیره کاتالوگ'}</button>
     </form></div>}
 
