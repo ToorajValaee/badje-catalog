@@ -3,6 +3,7 @@ import { findCatalogBySlug } from '@/lib/catalogs';
 import { normalizeSlug } from '@/lib/slug';
 import { readManifest } from '@/lib/storage';
 import CatalogViewer from '@/components/CatalogViewer';
+import type { StaticNavigationMode } from '@/lib/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,5 +33,7 @@ export default async function CatalogPage({ params }: { params: Promise<{ slug: 
     manifest={manifest}
     version={catalog.updatedAt.getTime().toString()}
     initialPage={1}
+    staticPdf={catalog.staticPdf}
+    navigationMode={catalog.navigationMode as StaticNavigationMode}
   />;
 }
