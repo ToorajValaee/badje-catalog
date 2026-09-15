@@ -12,6 +12,16 @@ def clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
     return max(low, min(high, value))
 
 
+def emit_progress(stage: str, current: int, total: int, percent: int) -> None:
+    print(json.dumps({
+        "type": "progress",
+        "stage": stage,
+        "current": current,
+        "total": total,
+        "percent": max(0, min(100, percent)),
+    }), flush=True)
+
+
 def main() -> int:
     if len(sys.argv) != 3:
         print("usage: generate.py INPUT.pdf OUTPUT_DIR", file=sys.stderr)
@@ -34,11 +44,14 @@ def main() -> int:
     if document.page_count < 1:
         raise RuntimeError("PDF_HAS_NO_PAGES")
 
+    page_count = document.page_count
+    emit_progress("rendering", 0, page_count, 1)
+
     manifest_pages = []
     total_links = 0
     total_image_bytes = 0
 
-    for index in range(document.page_count):
+    for index in range(page_count):
         page = document.load_page(index)
         rect = page.rect
         if rect.width <= 0 or rect.height <= 0:
@@ -73,7 +86,7 @@ def main() -> int:
 
             item = None
             target_page = raw.get("page", -1)
-            if isinstance(target_page, int) and 0 <= target_page < document.page_count:
+            if isinstance(target_page, int) and 0 <= target_page < page_count:
                 item = {
                     "kind": "internal",
                     "page": target_page + 1,
@@ -110,9 +123,15 @@ def main() -> int:
             "links": links,
         })
 
+        completed = index + 1
+        # Reserve the final few percent for manifest validation and atomic swap.
+        percent = 2 + round((completed / page_count) * 93)
+        emit_progress("rendering", completed, page_count, percent)
+
+    emit_progress("finalizing", page_count, page_count, 97)
     manifest = {
         "version": 2,
-        "pageCount": document.page_count,
+        "pageCount": page_count,
         "renderDpi": dpi,
         "webpQuality": quality,
         "webpLossless": lossless,
@@ -123,14 +142,15 @@ def main() -> int:
     }
     manifest_path = output / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    emit_progress("finalizing", page_count, page_count, 99)
     print(json.dumps({
-        "pageCount": document.page_count,
+        "pageCount": page_count,
         "linkCount": total_links,
         "generatedImageBytes": total_image_bytes,
         "renderDpi": dpi,
         "webpQuality": quality,
         "webpLossless": lossless,
-    }))
+    }), flush=True)
     return 0
 
 
