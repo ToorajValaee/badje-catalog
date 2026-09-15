@@ -9,6 +9,7 @@ import { pdfStreamFromRequest } from '@/lib/upload';
 import { deleteCatalogFiles, generateCatalogFiles, regenerateCatalogWeb, sourceFilename } from '@/lib/storage';
 import { env } from '@/lib/env';
 import { renderSettingsForCatalog, renderSettingsFromSearchParams } from '@/lib/render-settings';
+import { parseStaticNavigationMode, parseStaticPdf } from '@/lib/navigation';
 
 export const maxDuration = 300;
 
@@ -28,6 +29,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const title = (request.nextUrl.searchParams.get('title') || '').trim();
     const slug = validateSlug(request.nextUrl.searchParams.get('slug') || '');
     const active = request.nextUrl.searchParams.get('active') !== 'false';
+    const staticPdf = parseStaticPdf(request.nextUrl.searchParams.get('staticPdf'), current.staticPdf);
+    const navigationMode = parseStaticNavigationMode(request.nextUrl.searchParams.get('navigationMode'), current.navigationMode as any);
     const settings = renderSettingsFromSearchParams(request.nextUrl.searchParams, renderSettingsForCatalog(current));
     const regenerate = request.nextUrl.searchParams.get('regenerate') === 'true';
     if (!title) return NextResponse.json({ error: 'عنوان کاتالوگ الزامی است.' }, { status: 400 });
@@ -68,6 +71,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       title,
       slug,
       active,
+      staticPdf,
+      navigationMode,
       objectKey,
       originalFilename,
       fileSize,
@@ -84,6 +89,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({
       ok: true,
       regenerated: didGenerate,
+      staticPdf,
+      navigationMode,
       pageCount,
       linkCount,
       generatedSize,
@@ -99,6 +106,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (message === 'PDF_GENERATION_FAILED') return NextResponse.json({ error: 'ساخت نسخه وب کاتالوگ انجام نشد. فایل PDF را بررسی کنید.' }, { status: 422 });
     if (message === 'SOURCE_PDF_MISSING') return NextResponse.json({ error: 'فایل PDF اصلی برای بازسازی پیدا نشد.' }, { status: 409 });
     if (message === 'RENDER_SETTINGS_INVALID') return NextResponse.json({ error: 'تنظیمات کیفیت خروجی معتبر نیست.' }, { status: 400 });
+    if (message === 'NAVIGATION_MODE_INVALID') return NextResponse.json({ error: 'روش پیمایش انتخاب‌شده معتبر نیست.' }, { status: 400 });
     if (message.includes('نامک')) return NextResponse.json({ error: message }, { status: 400 });
     console.error(error);
     return NextResponse.json({ error: 'ویرایش کاتالوگ انجام نشد.' }, { status: 500 });
