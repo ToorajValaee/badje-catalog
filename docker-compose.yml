@@ -12,6 +12,10 @@ services:
       CATALOG_RENDER_DPI: ${CATALOG_RENDER_DPI:-200}
       CATALOG_WEBP_QUALITY: ${CATALOG_WEBP_QUALITY:-96}
       CATALOG_WEBP_LOSSLESS: ${CATALOG_WEBP_LOSSLESS:-true}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM_NAME: ${RESEND_FROM_NAME:-Publio}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-publio@badje.ir}
+      RESEND_REPLY_TO: ${RESEND_REPLY_TO:-publio@badje.ir}
     volumes:
       - ./uploads:/data/uploads
     ports:
