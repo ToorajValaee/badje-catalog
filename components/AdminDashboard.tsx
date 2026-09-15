@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Copy, Edit3, ExternalLink, FileText, Gauge, LogOut, Plus, QrCode, RefreshCw, Trash2, UploadCloud, X } from 'lucide-react';
+import type { StaticNavigationMode } from '@/lib/navigation';
 
 type CatalogItem = {
   id: string;
@@ -12,6 +13,8 @@ type CatalogItem = {
   originalFilename: string;
   fileSize: number;
   active: boolean;
+  staticPdf: boolean;
+  navigationMode: StaticNavigationMode;
   renderDpi: number;
   webpQuality: number;
   webpLossless: boolean;
@@ -31,6 +34,13 @@ function formatBytes(n: number) {
   if (!n) return '0 KB';
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function navigationLabel(mode: StaticNavigationMode) {
+  if (mode === 'swipe-right') return 'سوایپ به راست';
+  if (mode === 'swipe-down') return 'سوایپ به پایین';
+  if (mode === 'free-scroll') return 'اسکرول آزاد';
+  return 'سوایپ به چپ';
 }
 
 function upload(method: 'POST' | 'PUT', url: string, file: File | null, progress: (n: number) => void, processing: () => void) {
@@ -75,6 +85,8 @@ export default function AdminDashboard({
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [staticPdf, setStaticPdf] = useState(false);
+  const [navigationMode, setNavigationMode] = useState<StaticNavigationMode>('swipe-left');
   const [renderDpi, setRenderDpi] = useState(renderDefaults.renderDpi);
   const [webpQuality, setWebpQuality] = useState(renderDefaults.webpQuality);
   const [webpLossless, setWebpLossless] = useState(renderDefaults.webpLossless);
@@ -116,6 +128,8 @@ export default function AdminDashboard({
         title,
         slug,
         active: String(modal?.type === 'edit' ? active : true),
+        staticPdf: String(staticPdf),
+        navigationMode,
         ...qualityParams(),
         regenerate: String(mustRegenerate),
       });
@@ -134,6 +148,8 @@ export default function AdminDashboard({
             originalFilename: file?.name || '',
             fileSize: file?.size || 0,
             active: true,
+            staticPdf: created.staticPdf,
+            navigationMode: created.navigationMode,
             renderDpi: created.renderDpi,
             webpQuality: created.webpQuality,
             webpLossless: created.webpLossless,
@@ -216,6 +232,8 @@ export default function AdminDashboard({
     setError('');
     setProgress(0);
     setSelectedFile(null);
+    setStaticPdf(false);
+    setNavigationMode('swipe-left');
     setRenderDpi(renderDefaults.renderDpi);
     setWebpQuality(renderDefaults.webpQuality);
     setWebpLossless(renderDefaults.webpLossless);
@@ -226,6 +244,8 @@ export default function AdminDashboard({
     setError('');
     setProgress(0);
     setSelectedFile(null);
+    setStaticPdf(item.staticPdf);
+    setNavigationMode(item.navigationMode);
     setRenderDpi(item.renderDpi);
     setWebpQuality(item.webpQuality);
     setWebpLossless(item.webpLossless);
@@ -259,10 +279,17 @@ export default function AdminDashboard({
     <main className="container adminMain">
       <div className="adminIntro"><div><div className="eyebrow">مدیریت محتوا</div><h1>کاتالوگ‌ها</h1><p>انتشار، ویرایش، کیفیت خروجی وب و دریافت QR Code کاتالوگ‌های بادجه.</p></div><button className="btn btnPrimary" onClick={openCreate}><Plus/> کاتالوگ جدید</button></div>
       <div className="statsRow"><article><span>تعداد کاتالوگ</span><strong>{catalogs.length}</strong></article><article><span>حجم PDF اصلی</span><strong>{formatBytes(totalSize)}</strong></article><article><span>حجم نسخه‌های وب</span><strong>{formatBytes(totalWebSize)}</strong></article></div>
-      {catalogs.length ? <div className="catalogTable"><div className="catalogHead"><span>کاتالوگ</span><span>لینک</span><span>وضعیت</span><span>کیفیت وب</span><span>عملیات</span></div>{catalogs.map(item => <div className="catalogRow" key={item.id}><div className="catalogName"><div className="fileBadge"><FileText/></div><div><strong>{item.title}</strong><small>{item.originalFilename}</small></div></div><div className="catalogLink"><a href={`/${item.slug}`} target="_blank">/{item.slug} <ExternalLink/></a></div><div><span className={item.active ? 'status active' : 'status'}>{item.active ? 'فعال' : 'غیرفعال'}</span></div><div className="qualityCell"><strong>{item.renderDpi} DPI</strong><small>{item.webpLossless ? 'Lossless' : `Q${item.webpQuality}`} · {item.generatedPageCount || '—'} صفحه · {formatBytes(item.generatedSize)}</small></div><div className="rowActions"><button title="QR Code" onClick={()=>setModal({type:'qr',item})}><QrCode/></button><button title="ویرایش" onClick={()=>openEdit(item)}><Edit3/></button><button className="danger" title="حذف" disabled={busy} onClick={()=>remove(item)}><Trash2/></button></div></div>)}</div> : <div className="emptyState"><img src="/img/empty-catalog.svg" alt=""/><h2>هنوز کاتالوگی منتشر نشده</h2><p>اولین PDF را اضافه کنید تا لینک و QR آن ساخته شود.</p><button className="btn btnPrimary" onClick={openCreate}><Plus/> افزودن کاتالوگ</button></div>}
+      {catalogs.length ? <div className="catalogTable"><div className="catalogHead"><span>کاتالوگ</span><span>لینک</span><span>وضعیت</span><span>کیفیت وب</span><span>عملیات</span></div>{catalogs.map(item => <div className="catalogRow" key={item.id}><div className="catalogName"><div className="fileBadge"><FileText/></div><div><strong>{item.title}</strong><small>{item.originalFilename}</small></div></div><div className="catalogLink"><a href={`/${item.slug}`} target="_blank">/{item.slug} <ExternalLink/></a></div><div><span className={item.active ? 'status active' : 'status'}>{item.active ? 'فعال' : 'غیرفعال'}</span></div><div className="qualityCell"><strong>{item.renderDpi} DPI</strong><small>{item.webpLossless ? 'Lossless' : `Q${item.webpQuality}`} · {item.generatedPageCount || '—'} صفحه · {formatBytes(item.generatedSize)}{item.staticPdf ? ` · ${navigationLabel(item.navigationMode)}` : ''}</small></div><div className="rowActions"><button title="QR Code" onClick={()=>setModal({type:'qr',item})}><QrCode/></button><button title="ویرایش" onClick={()=>openEdit(item)}><Edit3/></button><button className="danger" title="حذف" disabled={busy} onClick={()=>remove(item)}><Trash2/></button></div></div>)}</div> : <div className="emptyState"><img src="/img/empty-catalog.svg" alt=""/><h2>هنوز کاتالوگی منتشر نشده</h2><p>اولین PDF را اضافه کنید تا لینک و QR آن ساخته شود.</p><button className="btn btnPrimary" onClick={openCreate}><Plus/> افزودن کاتالوگ</button></div>}
     </main>
 
     {(modal?.type === 'create' || modal?.type === 'edit') && <div className="modal"><div className="modalBackdrop" onClick={closeModal}/><form className="modalCard" onSubmit={save}><button type="button" className="modalClose" onClick={closeModal}><X/></button><div className="formHeading"><h2>{modal.type === 'create' ? 'کاتالوگ جدید' : 'ویرایش کاتالوگ'}</h2><p>{modal.type === 'create' ? 'PDF اصلی ذخیره می‌شود و نسخه وب با کیفیت انتخابی ساخته می‌شود.' : 'PDF اصلی حفظ می‌شود؛ می‌توانید نسخه وب را هر زمان با کیفیت دیگری بازسازی کنید.'}</p></div>{error && <div className="alertError">{error}</div>}<label className="field"><span>عنوان کاتالوگ</span><input name="title" required defaultValue={modal.type==='edit'?modal.item.title:''} placeholder="مثلاً کاتالوگ معرفی محصولات"/></label><label className="field"><span>نامک / آدرس</span><div className="slugField"><bdi>/</bdi><input name="slug" required dir="ltr" defaultValue={modal.type==='edit'?modal.item.slug:''} placeholder="hello-world"/></div><small>فقط حروف فارسی/انگلیسی، عدد و خط تیره.</small></label>{modal.type==='edit' && <label className="switchRow"><input name="active" type="checkbox" defaultChecked={modal.item.active}/><span>کاتالوگ برای عموم فعال باشد</span></label>}
+
+      <section className="qualityPanel">
+        <div className="qualityHeading"><div className="qualityIcon"><FileText/></div><div><strong>نوع و پیمایش کاتالوگ</strong><small>اگر PDF لینک داخلی ندارد، آن را استاتیک کنید و روش حرکت بین صفحه‌ها را انتخاب کنید.</small></div></div>
+        <label className="switchRow"><input type="checkbox" checked={staticPdf} onChange={e=>setStaticPdf(e.target.checked)}/><span>این PDF استاتیک و بدون لینک ناوبری است</span></label>
+        {staticPdf && <div className="qualityGrid"><label><span>روش پیمایش</span><select value={navigationMode} onChange={e=>setNavigationMode(e.target.value as StaticNavigationMode)}><option value="swipe-left">سوایپ به چپ — صفحه بعد</option><option value="swipe-right">سوایپ به راست — صفحه بعد</option><option value="swipe-down">سوایپ به پایین — صفحه بعد</option><option value="free-scroll">اسکرول آزاد — همه صفحه‌ها زیر هم</option></select></label></div>}
+        {staticPdf && navigationMode === 'free-scroll' && <div className="qualityNote">در اسکرول آزاد همه تصاویر صفحه‌ها بدون فاصله به هم می‌چسبند و کاربر از بالا تا انتهای کاتالوگ اسکرول می‌کند.</div>}
+      </section>
 
       <section className="qualityPanel">
         <div className="qualityHeading"><div className="qualityIcon"><Gauge/></div><div><strong>کیفیت نسخه وب</strong><small>وضوح و فشرده‌سازی تصاویر صفحه‌ها را مشخص کنید.</small></div></div>
