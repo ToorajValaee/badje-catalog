@@ -5,6 +5,7 @@ import { env } from '@/lib/env';
 import { defaultRenderSettings } from '@/lib/render-settings';
 import { parseStaticNavigationMode } from '@/lib/navigation';
 import AdminDashboard from '@/components/AdminDashboard';
+import AdminAccountNav from '@/components/AdminAccountNav';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,9 +19,12 @@ export default async function AdminPage() {
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }));
-  return <AdminDashboard
-    catalogs={items}
-    maxUploadMb={env().MAX_UPLOAD_MB}
-    renderDefaults={defaultRenderSettings()}
-  />;
+  return <>
+    <AdminAccountNav/>
+    <AdminDashboard
+      catalogs={items}
+      maxUploadMb={env().MAX_UPLOAD_MB}
+      renderDefaults={defaultRenderSettings()}
+    />
+  </>;
 }
