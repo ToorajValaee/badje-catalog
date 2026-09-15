@@ -8,6 +8,8 @@ export const catalogs = pgTable('catalogs', {
   originalFilename: text('original_filename').notNull(),
   fileSize: bigint('file_size', { mode: 'number' }).notNull(),
   active: boolean('active').notNull().default(true),
+  staticPdf: boolean('static_pdf').notNull().default(false),
+  navigationMode: varchar('navigation_mode', { length: 32 }).notNull().default('swipe-left'),
   renderDpi: integer('render_dpi').notNull().default(200),
   webpQuality: integer('webp_quality').notNull().default(96),
   webpLossless: boolean('webp_lossless').notNull().default(true),
