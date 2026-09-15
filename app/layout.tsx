@@ -3,8 +3,8 @@ import './globals.css';
 import './static-catalog.css';
 
 export const metadata: Metadata = {
-  title: { default: 'کاتالوگ دیجیتال بادجه', template: '%s | بادجه' },
-  description: 'طراحی و انتشار کاتالوگ دیجیتال حرفه‌ای با لینک اختصاصی و QR Code',
+  title: { default: 'Publio | کاتالوگ دیجیتال', template: '%s | Publio' },
+  description: 'طراحی و انتشار کاتالوگ دیجیتال حرفه‌ای با لینک اختصاصی و QR Code — Powered by badje.ir',
   icons: { icon: '/img/favicon.svg' },
 };
 
