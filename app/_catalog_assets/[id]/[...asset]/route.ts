@@ -24,7 +24,8 @@ export async function GET(
 
   try {
     const file = await readFile(path.join(catalogGeneratedDir(id), ...clean));
-    const body = new Uint8Array(file.buffer, file.byteOffset, file.byteLength);
+    const body = new ArrayBuffer(file.byteLength);
+    new Uint8Array(body).set(file);
     const isWebp = clean.at(-1)?.toLowerCase().endsWith('.webp');
     return new NextResponse(body, {
       status: 200,
