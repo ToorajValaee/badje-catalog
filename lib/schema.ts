@@ -16,6 +16,7 @@ export const plans = pgTable('plans', {
 export const users = pgTable('users', {
   id: varchar('id', { length: 36 }).primaryKey(),
   email: varchar('email', { length: 320 }).notNull().unique(),
+  passwordHash: text('password_hash'),
   locale: varchar('locale', { length: 2 }).notNull().default('en'),
   status: varchar('status', { length: 24 }).notNull().default('active'),
   planId: varchar('plan_id', { length: 36 }).notNull(),
