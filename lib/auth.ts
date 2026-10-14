@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
 import { eq } from 'drizzle-orm';
+import { timingSafeEqual } from 'node:crypto';
 import { env } from '@/lib/env';
 import { db, ensureSchema } from '@/lib/db';
 import { users } from '@/lib/schema';
@@ -11,6 +12,13 @@ const USER_TTL = 60 * 60 * 24 * 30;
 function key() { return new TextEncoder().encode(env().SESSION_SECRET); }
 export function configuredAdminEmail(){return (env().ADMIN_EMAIL || '').trim().toLowerCase();}
 export function isAdminEmail(email:string){const configured=configuredAdminEmail();return !!configured && email.trim().toLowerCase()===configured;}
+export function verifyAdminPassword(password:string){
+  const configured=env().ADMIN_PASSWORD||'';
+  if(!configured)return false;
+  const a=Buffer.from(password);
+  const b=Buffer.from(configured);
+  return a.length===b.length&&timingSafeEqual(a,b);
+}
 export async function createSession(email:string){const normalized=email.trim().toLowerCase();const token=await new SignJWT({admin:true,email:normalized}).setProtectedHeader({alg:'HS256'}).setIssuedAt().setExpirationTime('12h').sign(key());(await cookies()).set(ADMIN_COOKIE,token,{httpOnly:true,secure:env().COOKIE_SECURE==='true',sameSite:'strict',path:'/',maxAge:60*60*12});}
 export async function clearSession(){(await cookies()).delete(ADMIN_COOKIE);}
 export async function isAdmin(){const token=(await cookies()).get(ADMIN_COOKIE)?.value;if(!token)return false;try{const {payload}=await jwtVerify(token,key());return payload.admin===true&&typeof payload.email==='string'&&isAdminEmail(payload.email);}catch{return false;}}
