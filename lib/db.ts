@@ -22,9 +22,10 @@ export function ensureSchema() {
           sort_order integer NOT NULL DEFAULT 0, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
         );
         CREATE TABLE IF NOT EXISTS users (
-          id varchar(36) PRIMARY KEY, email varchar(320) NOT NULL UNIQUE, locale varchar(2) NOT NULL DEFAULT 'en',
-          status varchar(24) NOT NULL DEFAULT 'active', plan_id varchar(36) NOT NULL, email_verified_at timestamptz,
-          last_login_at timestamptz, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
+          id varchar(36) PRIMARY KEY, email varchar(320) NOT NULL UNIQUE, password_hash text,
+          locale varchar(2) NOT NULL DEFAULT 'en', status varchar(24) NOT NULL DEFAULT 'active', plan_id varchar(36) NOT NULL,
+          email_verified_at timestamptz, last_login_at timestamptz, created_at timestamptz NOT NULL DEFAULT now(),
+          updated_at timestamptz NOT NULL DEFAULT now()
         );
         CREATE TABLE IF NOT EXISTS otp_codes (
           id varchar(36) PRIMARY KEY, email varchar(320) NOT NULL, code_hash varchar(64) NOT NULL,
@@ -39,6 +40,7 @@ export function ensureSchema() {
           generated_page_count integer, generated_link_count integer, generated_size bigint NOT NULL DEFAULT 0,
           generated_at timestamptz, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
         );
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash text;
         ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS user_id varchar(36);
         ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS static_pdf boolean NOT NULL DEFAULT false;
         ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS navigation_mode varchar(32) NOT NULL DEFAULT 'swipe-left';
