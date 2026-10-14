@@ -41,11 +41,15 @@ export async function verifyPassword(password:string,stored:string){
 export async function registerUser(email:string,password:string,locale:Locale){
   await ensureSchema();
   const [existing]=await db().select().from(users).where(eq(users.email,email)).limit(1);
-  if(existing)throw new Error('EMAIL_EXISTS');
-  const plan=await getFreePlan();
-  const id=randomUUID();
   const now=new Date();
   const passwordHash=await hashPassword(password);
+  if(existing){
+    if(existing.passwordHash)throw new Error('EMAIL_EXISTS');
+    await db().update(users).set({passwordHash,locale,lastLoginAt:now,updatedAt:now}).where(eq(users.id,existing.id));
+    return {...existing,passwordHash,locale,lastLoginAt:now,updatedAt:now};
+  }
+  const plan=await getFreePlan();
+  const id=randomUUID();
   await db().insert(users).values({id,email,passwordHash,locale,status:'active',planId:plan.id,emailVerifiedAt:null,lastLoginAt:now});
   const [created]=await db().select().from(users).where(eq(users.id,id)).limit(1);
   if(!created)throw new Error('REGISTER_FAILED');
