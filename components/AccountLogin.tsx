@@ -1,7 +1,85 @@
 'use client';
-import { useRef,useState } from 'react';
+import { useState } from 'react';
 import type { Locale } from '@/lib/i18n';
 
-function OtpBoxes({value,onChange,disabled}:{value:string;onChange:(v:string)=>void;disabled:boolean}){const refs=useRef<Array<HTMLInputElement|null>>([]);const chars=Array.from({length:6},(_,i)=>value[i]||'');function setAt(i:number,v:string){const clean=v.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(-1);const next=[...chars];next[i]=clean;onChange(next.join('').slice(0,6));if(clean&&i<5)refs.current[i+1]?.focus();}return <div className="otpBoxes" dir="ltr" onPaste={e=>{e.preventDefault();const clean=e.clipboardData.getData('text').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);onChange(clean);refs.current[Math.min(clean.length,5)]?.focus();}}>{chars.map((c,i)=><input key={i} ref={el=>{refs.current[i]=el}} value={c} disabled={disabled} maxLength={1} inputMode="text" autoCapitalize="characters" autoComplete={i===0?'one-time-code':'off'} onChange={e=>setAt(i,e.target.value)} onKeyDown={e=>{if(e.key==='Backspace'&&!chars[i]&&i>0)refs.current[i-1]?.focus();}} aria-label={`OTP ${i+1}`}/>)}</div>}
+export default function AccountLogin({locale}:{locale:Locale}){
+  const fa=locale==='fa';
+  const [mode,setMode]=useState<'login'|'register'>('login');
+  const [email,setEmail]=useState('');
+  const [password,setPassword]=useState('');
+  const [confirm,setConfirm]=useState('');
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState('');
 
-export default function AccountLogin({locale}:{locale:Locale}){const fa=locale==='fa';const [email,setEmail]=useState('');const [code,setCode]=useState('');const [step,setStep]=useState<'email'|'otp'>('email');const [busy,setBusy]=useState(false);const [error,setError]=useState('');async function requestOtp(e?:React.FormEvent){e?.preventDefault();setBusy(true);setError('');const r=await fetch('/api/auth/request-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,locale})});const d=await r.json();setBusy(false);if(!r.ok){setError(d.error==='SUSPENDED'?(fa?'حساب شما تعلیق شده است.':'Your account is suspended.'):(fa?'ارسال کد انجام نشد.':'Could not send the code.'));return;}setCode('');setStep('otp');}async function verify(e:React.FormEvent){e.preventDefault();if(code.length!==6)return;setBusy(true);setError('');const r=await fetch('/api/auth/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,code,locale})});const d=await r.json();setBusy(false);if(!r.ok){setError(d.error==='SUSPENDED'?(fa?'حساب شما تعلیق شده است.':'Your account is suspended.'):(fa?'کد واردشده معتبر نیست.':'The code is invalid or expired.'));return;}location.href='/account';}return <main className="authPage"><a className="authLocale btn btnGhost" href={`/api/locale?lang=${fa?'en':'fa'}&next=/account`}>{fa?'English':'فارسی'}</a><section className="authVisual"><a className="brand lightBrand" href="/"><span><strong>Publio</strong><small>Powered by badje.ir</small></span></a><div className="authPitch"><div className="eyebrow light">{fa?'حساب کاربری':'PUBLIO ACCOUNT'}</div><h1>{fa?'ثبت‌نام و ورود با ایمیل':'Sign in or register with email'}</h1><p>{fa?'بدون رمز عبور؛ یک کد امن ۶ کاراکتری برای شما ایمیل می‌کنیم.':'No password. We email you a secure 6-character verification code.'}</p></div></section><section className="authFormWrap"><form className="authForm" onSubmit={step==='email'?requestOtp:verify}><div className="formHeading"><h2>{step==='email'?(fa?'ورود / ثبت‌نام':'Sign in / Register'):(fa?'کد تأیید':'Verification code')}</h2><p>{step==='email'?(fa?'ایمیل خود را وارد کنید.':'Enter your email address.'):(fa?`کد ارسال‌شده به ${email} را وارد کنید.`:`Enter the code sent to ${email}.`)}</p></div>{error&&<div className="alertError">{error}</div>}{step==='email'?<label className="field"><span>{fa?'ایمیل':'Email'}</span><input type="email" required autoFocus value={email} onChange={e=>setEmail(e.target.value)} dir="ltr"/></label>:<label className="field"><span>{fa?'کد ۶ کاراکتری':'6-character code'}</span><OtpBoxes value={code} onChange={setCode} disabled={busy}/></label>}<button className="btn btnPrimary full" disabled={busy||(step==='otp'&&code.length!==6)}>{busy?(fa?'لطفاً صبر کنید…':'Please wait…'):step==='email'?(fa?'ارسال کد':'Send code'):(fa?'تأیید و ادامه':'Verify and continue')}</button>{step==='otp'&&<><button type="button" className="btn btnSoft full secondaryAction" disabled={busy} onClick={()=>{setStep('email');setCode('');}}>{fa?'تغییر ایمیل':'Change email'}</button><button type="button" className="btn btnGhost full secondaryAction" disabled={busy} onClick={()=>requestOtp()}>{fa?'ارسال دوباره کد':'Resend code'}</button></>}</form></section></main>}
+  async function submit(e:React.FormEvent){
+    e.preventDefault();
+    setError('');
+    if(mode==='register'&&password!==confirm){
+      setError(fa?'رمز عبور و تکرار آن یکسان نیست.':'Passwords do not match.');
+      return;
+    }
+    if(password.length<8){
+      setError(fa?'رمز عبور باید حداقل ۸ کاراکتر باشد.':'Password must be at least 8 characters.');
+      return;
+    }
+    setBusy(true);
+    try{
+      const r=await fetch('/api/auth/password',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:mode,email,password,locale}),
+      });
+      const d=await r.json();
+      if(!r.ok){
+        const message=
+          d.error==='SUSPENDED'?(fa?'حساب شما تعلیق شده است.':'Your account is suspended.'):
+          d.error==='EMAIL_EXISTS'?(fa?'این ایمیل قبلاً ثبت شده است. وارد حساب شوید.':'This email is already registered. Sign in instead.'):
+          d.error==='ADMIN_REGISTER_DISABLED'?(fa?'حساب مدیر از طریق تنظیمات سرور تعریف می‌شود.':'The administrator account is configured on the server.'):
+          d.error==='INVALID_CREDENTIALS'?(fa?'ایمیل یا رمز عبور صحیح نیست.':'Email or password is incorrect.'):
+          d.error==='PASSWORD_TOO_SHORT'?(fa?'رمز عبور باید حداقل ۸ کاراکتر باشد.':'Password must be at least 8 characters.'):
+          (fa?'انجام عملیات ممکن نشد.':'Could not complete the request.');
+        setError(message);
+        return;
+      }
+      location.href='/account';
+    }finally{
+      setBusy(false);
+    }
+  }
+
+  function switchMode(next:'login'|'register'){
+    setMode(next);
+    setPassword('');
+    setConfirm('');
+    setError('');
+  }
+
+  return <main className="authPage">
+    <a className="authLocale btn btnGhost" href={`/api/locale?lang=${fa?'en':'fa'}&next=/account`}>{fa?'English':'فارسی'}</a>
+    <section className="authVisual">
+      <a className="brand lightBrand" href="/"><span><strong>Publio</strong><small>Powered by badje.ir</small></span></a>
+      <div className="authPitch">
+        <div className="eyebrow light">{fa?'حساب کاربری':'PUBLIO ACCOUNT'}</div>
+        <h1>{fa?'کاتالوگ‌های خود را بسازید و مدیریت کنید':'Create and manage your digital catalogs'}</h1>
+        <p>{fa?'با ایمیل و رمز عبور وارد شوید. تأیید ایمیل در نسخه بعدی اضافه خواهد شد.':'Sign in with your email and password. Email verification will be added in a later version.'}</p>
+      </div>
+    </section>
+    <section className="authFormWrap">
+      <form className="authForm" onSubmit={submit}>
+        <div className="formHeading">
+          <h2>{mode==='login'?(fa?'ورود':'Sign in'):(fa?'ساخت حساب':'Create account')}</h2>
+          <p>{mode==='login'?(fa?'با ایمیل و رمز عبور وارد شوید.':'Use your email and password.'):(fa?'ثبت‌نام رایگان است و ۵۰ مگابایت فضا دریافت می‌کنید.':'Registration is free and includes 50 MB of storage.')}</p>
+        </div>
+        <div className="authModeSwitch">
+          <button type="button" className={mode==='login'?'btn btnPrimary':'btn btnSoft'} onClick={()=>switchMode('login')}>{fa?'ورود':'Sign in'}</button>
+          <button type="button" className={mode==='register'?'btn btnPrimary':'btn btnSoft'} onClick={()=>switchMode('register')}>{fa?'ثبت‌نام':'Register'}</button>
+        </div>
+        {error&&<div className="alertError">{error}</div>}
+        <label className="field"><span>{fa?'ایمیل':'Email'}</span><input type="email" required autoFocus value={email} onChange={e=>setEmail(e.target.value)} dir="ltr" autoComplete="email"/></label>
+        <label className="field"><span>{fa?'رمز عبور':'Password'}</span><input type="password" required minLength={8} maxLength={200} value={password} onChange={e=>setPassword(e.target.value)} dir="ltr" autoComplete={mode==='login'?'current-password':'new-password'}/></label>
+        {mode==='register'&&<label className="field"><span>{fa?'تکرار رمز عبور':'Confirm password'}</span><input type="password" required minLength={8} maxLength={200} value={confirm} onChange={e=>setConfirm(e.target.value)} dir="ltr" autoComplete="new-password"/></label>}
+        <button className="btn btnPrimary full" disabled={busy}>{busy?(fa?'لطفاً صبر کنید…':'Please wait…'):mode==='login'?(fa?'ورود به حساب':'Sign in'):(fa?'ساخت حساب رایگان':'Create free account')}</button>
+      </form>
+    </section>
+  </main>;
+}
