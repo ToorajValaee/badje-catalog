@@ -1,5 +1,5 @@
 import { createHash, createPrivateKey, createPublicKey, X509Certificate } from 'node:crypto';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { resolveCname } from 'node:dns/promises';
 import { domainToASCII } from 'node:url';
@@ -162,6 +162,13 @@ server {
 
   await writeFile(path.join(nginxRoot(),`${id}.conf`),config,{encoding:'utf8',mode:0o644});
   await requestNginxReload();
+}
+
+export async function refreshCustomDomainNginxConfig(catalogId:string,domain:string,slug:string){
+  const id=safeCatalogId(catalogId);
+  const fullchainPem=await readFile(path.join(certRoot(),id,'fullchain.pem'),'utf8');
+  const privateKeyPem=await readFile(path.join(certRoot(),id,'privkey.pem'),'utf8');
+  await writeCustomDomainFiles({catalogId:id,domain,slug,fullchainPem,privateKeyPem});
 }
 
 export async function removeCustomDomainFiles(catalogId:string){
