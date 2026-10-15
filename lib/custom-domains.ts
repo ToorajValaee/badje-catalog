@@ -67,7 +67,7 @@ function slugEscape(value:string){
   return value;
 }
 
-export async function writeCustomDomainFiles(args:{catalogId:string;domain:string;slug:string;fullchainPem:string;privateKeyPem:string}){
+export async function writeCustomDomainFiles(args:{catalogId:string;domain:string;slug:string;fullchainPem:string;privateKeyPem:string},signalReload=true){
   const id=safeCatalogId(args.catalogId);
   const domain=nginxEscape(normalizeCustomDomain(args.domain));
   const slug=slugEscape(args.slug);
@@ -117,7 +117,8 @@ export async function writeCustomDomainFiles(args:{catalogId:string;domain:strin
     }
 
     location ~ ^/p/([0-9]+)$ {
-        proxy_pass http://host.docker.internal:8000/${slug}/p/$1;
+        rewrite ^/p/([0-9]+)$ /${slug}/p/$1 break;
+        proxy_pass http://host.docker.internal:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-Host $host;
@@ -161,7 +162,7 @@ server {
 `;
 
   await writeFile(path.join(nginxRoot(),`${id}.conf`),config,{encoding:'utf8',mode:0o644});
-  await requestNginxReload();
+  if(signalReload)await requestNginxReload();
 }
 
 export async function refreshCustomDomainNginxConfig(catalogId:string,domain:string,slug:string){
