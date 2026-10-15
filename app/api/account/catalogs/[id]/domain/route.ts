@@ -31,6 +31,8 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{id:stri
     const plan=await userPlan(user.id);
     if(!plan?.active||!plan.customDomain)return NextResponse.json({error:'CUSTOM_DOMAIN_PLAN_REQUIRED'},{status:403});
 
+    const contentLength=Number(request.headers.get('content-length')||0);
+    if(Number.isFinite(contentLength)&&contentLength>512*1024)return NextResponse.json({error:'CERTIFICATE_TOO_LARGE'},{status:413});
     const form=await request.formData();
     const action=String(form.get('action')||'activate');
     const domain=normalizeCustomDomain(String(form.get('domain')||''));
