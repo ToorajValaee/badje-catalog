@@ -1,5 +1,5 @@
 import { createHash, createPrivateKey, createPublicKey, X509Certificate } from 'node:crypto';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { resolveCname } from 'node:dns/promises';
 import { domainToASCII } from 'node:url';
@@ -75,9 +75,14 @@ export async function writeCustomDomainFiles(args:{catalogId:string;domain:strin
   const slug=slugEscape(args.slug);
   const certDir=path.join(certRoot(),id);
   await mkdir(certDir,{recursive:true,mode:0o700});
+  await chmod(certDir,0o700);
   await mkdir(nginxRoot(),{recursive:true,mode:0o755});
-  await writeFile(path.join(certDir,'fullchain.pem'),args.fullchainPem,{encoding:'utf8',mode:0o644});
-  await writeFile(path.join(certDir,'privkey.pem'),args.privateKeyPem,{encoding:'utf8',mode:0o600});
+  const fullchainPath=path.join(certDir,'fullchain.pem');
+  const privateKeyPath=path.join(certDir,'privkey.pem');
+  await writeFile(fullchainPath,args.fullchainPem,{encoding:'utf8',mode:0o644});
+  await writeFile(privateKeyPath,args.privateKeyPem,{encoding:'utf8',mode:0o600});
+  await chmod(fullchainPath,0o644);
+  await chmod(privateKeyPath,0o600);
 
   const config=`server {
     listen 443 ssl;
