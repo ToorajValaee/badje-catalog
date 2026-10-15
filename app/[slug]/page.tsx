@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import { findCatalogBySlug } from '@/lib/catalogs';
 import { normalizeSlug } from '@/lib/slug';
 import { readManifest } from '@/lib/storage';
@@ -20,6 +21,10 @@ export default async function CatalogPage({ params }: { params: Promise<{ slug: 
   const catalog = await findCatalogBySlug(cleanSlug);
   if (!catalog) notFound();
 
+  const requestHeaders=await headers();
+  const host=(requestHeaders.get('x-forwarded-host')||requestHeaders.get('host')||'').split(':')[0].toLowerCase();
+  const customDomainRoot=catalog.customDomainStatus==='active'&&!!catalog.customDomain&&host===catalog.customDomain;
+
   const manifest = await readManifest(catalog.id);
   if (!manifest?.pages?.length) {
     console.error(`Generated web catalog is missing: ${catalog.id}`);
@@ -35,5 +40,6 @@ export default async function CatalogPage({ params }: { params: Promise<{ slug: 
     initialPage={1}
     staticPdf={catalog.staticPdf}
     navigationMode={catalog.navigationMode as StaticNavigationMode}
+    customDomainRoot={customDomainRoot}
   />;
 }

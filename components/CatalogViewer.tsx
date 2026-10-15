@@ -13,6 +13,7 @@ type Props = {
   initialPage: number;
   staticPdf: boolean;
   navigationMode: StaticNavigationMode;
+  customDomainRoot?: boolean;
 };
 
 export default function CatalogViewer({
@@ -24,6 +25,7 @@ export default function CatalogViewer({
   initialPage,
   staticPdf,
   navigationMode,
+  customDomainRoot = false,
 }: Props) {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
@@ -31,9 +33,9 @@ export default function CatalogViewer({
   const page = manifest.pages[currentPage - 1];
   const freeScroll = staticPdf && navigationMode === 'free-scroll';
 
-  const pageUrl = (pageNumber: number) => pageNumber === 1
-    ? `/${encodeURIComponent(slug)}`
-    : `/${encodeURIComponent(slug)}/p/${pageNumber}`;
+  const pageUrl = (pageNumber: number) => customDomainRoot
+    ? (pageNumber === 1 ? '/' : `/p/${pageNumber}`)
+    : (pageNumber === 1 ? `/${encodeURIComponent(slug)}` : `/${encodeURIComponent(slug)}/p/${pageNumber}`);
 
   const imageUrl = (pageNumber: number) => {
     const target = manifest.pages[pageNumber - 1];
@@ -63,7 +65,7 @@ export default function CatalogViewer({
     const onPopState = () => {
       const path = window.location.pathname.replace(/\/+$/, '');
       const encodedSlug = `/${encodeURIComponent(slug)}`;
-      if (path === encodedSlug || path === `/${slug}`) {
+      if ((customDomainRoot && (path === '' || path === '/')) || path === encodedSlug || path === `/${slug}`) {
         setCurrentPage(1);
         return;
       }
@@ -76,7 +78,7 @@ export default function CatalogViewer({
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, [freeScroll, initialPage, manifest.pageCount, slug]);
+  }, [customDomainRoot, freeScroll, initialPage, manifest.pageCount, slug]);
 
   const preloadTargets = useMemo(() => {
     if (freeScroll || !page) return [] as number[];

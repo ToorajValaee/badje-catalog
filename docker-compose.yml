@@ -9,6 +9,8 @@ services:
       SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-200}
+      CUSTOM_DOMAIN_CNAME_TARGET: ${CUSTOM_DOMAIN_CNAME_TARGET:-catalog.badje.ir}
+      CUSTOM_DOMAIN_ROOT: /data/custom-domains
       ADMIN_EMAIL: ${ADMIN_EMAIL:?Set ADMIN_EMAIL in .env}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
       CATALOG_RENDER_DPI: ${CATALOG_RENDER_DPI:-200}
@@ -20,6 +22,7 @@ services:
       RESEND_REPLY_TO: ${RESEND_REPLY_TO:-publio@badje.ir}
     volumes:
       - ./uploads:/data/uploads
+      - ./custom-domains:/data/custom-domains
     ports:
       - "8000:8000"
     extra_hosts:
