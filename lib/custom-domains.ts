@@ -41,8 +41,10 @@ function privatePublicKeyFingerprint(privatePem:string){
 
 export function validateCustomDomainCertificate(domain:string,fullchainPem:string,privateKeyPem:string){
   if(Buffer.byteLength(fullchainPem)>128*1024||Buffer.byteLength(privateKeyPem)>64*1024)throw new Error('CERTIFICATE_TOO_LARGE');
+  const leafPem=fullchainPem.match(/-----BEGIN CERTIFICATE-----[\\s\\S]+?-----END CERTIFICATE-----/)?.[0];
+  if(!leafPem)throw new Error('INVALID_CERTIFICATE');
   let cert:X509Certificate;
-  try{cert=new X509Certificate(fullchainPem);}catch{throw new Error('INVALID_CERTIFICATE');}
+  try{cert=new X509Certificate(leafPem);}catch{throw new Error('INVALID_CERTIFICATE');}
   if(!cert.checkHost(domain,{subject:'default'}))throw new Error('CERTIFICATE_HOST_MISMATCH');
   const now=Date.now();
   const validFrom=Date.parse(cert.validFrom);
