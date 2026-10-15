@@ -98,54 +98,54 @@ export async function writeCustomDomainFiles(args:{catalogId:string;domain:strin
 
     location @catalog_asset_fallback_${id.replace(/-/g,'_')} {
         proxy_pass http://host.docker.internal:8000;
-        proxy_set_header Host \\$host;
-        proxy_set_header X-Real-IP \\$remote_addr;
-        proxy_set_header X-Forwarded-Host \\$host;
-        proxy_set_header X-Forwarded-Proto \\$scheme;
-        proxy_set_header X-Forwarded-For \\$proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_http_version 1.1;
     }
 
     location = / {
         proxy_pass http://host.docker.internal:8000/${slug};
-        proxy_set_header Host \\$host;
-        proxy_set_header X-Real-IP \\$remote_addr;
-        proxy_set_header X-Forwarded-Host \\$host;
-        proxy_set_header X-Forwarded-Proto \\$scheme;
-        proxy_set_header X-Forwarded-For \\$proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_http_version 1.1;
     }
 
     location ~ ^/p/([0-9]+)$ {
-        proxy_pass http://host.docker.internal:8000/${slug}/p/\\$1;
-        proxy_set_header Host \\$host;
-        proxy_set_header X-Real-IP \\$remote_addr;
-        proxy_set_header X-Forwarded-Host \\$host;
-        proxy_set_header X-Forwarded-Proto \\$scheme;
-        proxy_set_header X-Forwarded-For \\$proxy_add_x_forwarded_for;
+        proxy_pass http://host.docker.internal:8000/${slug}/p/$1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_http_version 1.1;
     }
 
     location = /pdf {
         proxy_pass http://host.docker.internal:8000/api/catalogs/${slug}/pdf;
-        proxy_set_header Host \\$host;
-        proxy_set_header X-Forwarded-Proto \\$scheme;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
     location ^~ /_next/ {
         proxy_pass http://host.docker.internal:8000;
-        proxy_set_header Host \\$host;
+        proxy_set_header Host $host;
         proxy_http_version 1.1;
     }
 
     location ^~ /fonts/ {
         proxy_pass http://host.docker.internal:8000;
-        proxy_set_header Host \\$host;
+        proxy_set_header Host $host;
     }
 
     location ^~ /img/ {
         proxy_pass http://host.docker.internal:8000;
-        proxy_set_header Host \\$host;
+        proxy_set_header Host $host;
     }
 
     location / {
@@ -156,7 +156,7 @@ export async function writeCustomDomainFiles(args:{catalogId:string;domain:strin
 server {
     listen 80;
     server_name ${domain};
-    return 301 https://\\$host\\$request_uri;
+    return 301 https://$host$request_uri;
 }
 `;
 
