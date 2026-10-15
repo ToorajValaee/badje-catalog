@@ -42,3 +42,6 @@
 /* Custom-domain setup */
 .customDomainPanel{background:#f7faf8}.domainStatusRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0}.domainStatusRow small{font-size:9px;color:var(--muted);direction:ltr}.domainButtons{display:flex;gap:8px;margin:10px 0}.domainCertGrid input{width:100%;min-height:43px;border:1px solid #d6e1dc;border-radius:10px;background:#fff;padding:8px;font-size:9px}.domainSecurityNote{display:block;color:var(--muted);font-size:8.5px;line-height:1.7;margin-top:8px}.customDomainPanel .qualityNote{word-break:break-word}.customDomainPanel .field{margin-bottom:10px}
 @media(max-width:620px){.domainButtons{flex-direction:column}.domainButtons .btn{width:100%}}
+
+.adminDataTable .planRow{grid-template-columns:1.6fr .55fr .85fr .85fr .65fr .65fr}
+@media(max-width:900px){.adminDataTable .planRow{grid-template-columns:1fr;align-items:stretch}.adminDataTable .planRow>*{grid-column:1!important;grid-row:auto!important}}
