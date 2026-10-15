@@ -45,6 +45,12 @@ export default function UserCatalogManager({locale,customSlug,customDomain,custo
        const message=data.error==='DNS_NOT_READY'?(fa?`CNAME هنوز به ${data.target||customDomainTarget} اشاره نمی‌کند.`:`CNAME does not point to ${data.target||customDomainTarget} yet.`):
          data.error==='DOMAIN_IN_USE'?(fa?'این دامنه قبلاً استفاده شده است.':'This domain is already in use.'):
          data.error==='REMOVE_CURRENT_DOMAIN_FIRST'?(fa?'ابتدا دامنه فعال فعلی را حذف کنید، سپس دامنه جدید را اضافه کنید.':'Remove the current active domain before adding a different one.'):
+         data.error==='INVALID_DOMAIN'?(fa?'دامنه معتبر نیست. فقط نام دامنه را بدون http یا مسیر وارد کنید.':'Enter a valid hostname without http, ports, or paths.'):
+         data.error==='CERTIFICATE_FILES_REQUIRED'?(fa?'هر دو فایل fullchain و private key لازم است.':'Both fullchain and private key files are required.'):
+         data.error==='INVALID_CERTIFICATE'?(fa?'فایل گواهی SSL معتبر نیست.':'The SSL certificate file is invalid.'):
+         data.error==='INVALID_PRIVATE_KEY'?(fa?'فایل private key معتبر نیست یا رمزگذاری شده است.':'The private key is invalid or encrypted.'):
+         data.error==='CERTIFICATE_TOO_LARGE'?(fa?'فایل‌های گواهی بیش از حد بزرگ هستند.':'The certificate files are too large.'):
+         data.error==='CUSTOM_DOMAIN_PLAN_REQUIRED'?(fa?'پلن فعلی دامنه اختصاصی ندارد.':'Your current plan does not include custom domains.'):
          data.error==='CERTIFICATE_HOST_MISMATCH'?(fa?'گواهی SSL این دامنه را پوشش نمی‌دهد.':'The certificate does not cover this domain.'):
          data.error==='PRIVATE_KEY_MISMATCH'?(fa?'Private key با گواهی مطابقت ندارد.':'The private key does not match the certificate.'):
          data.error==='CERTIFICATE_NOT_VALID'?(fa?'گواهی SSL هنوز معتبر نیست یا منقضی شده است.':'The SSL certificate is expired or not yet valid.'):
