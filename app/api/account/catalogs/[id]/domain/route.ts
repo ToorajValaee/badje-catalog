@@ -36,6 +36,10 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{id:stri
     const target=normalizeCustomDomain(env().CUSTOM_DOMAIN_CNAME_TARGET);
     if(domain===target)return NextResponse.json({error:'INVALID_DOMAIN'},{status:400});
 
+    if(catalog.customDomainStatus==='active'&&catalog.customDomain&&catalog.customDomain!==domain){
+      return NextResponse.json({error:'REMOVE_CURRENT_DOMAIN_FIRST'},{status:409});
+    }
+
     const [duplicate]=await db().select({id:catalogs.id}).from(catalogs)
       .where(and(eq(catalogs.customDomain,domain),ne(catalogs.id,id))).limit(1);
     if(duplicate)return NextResponse.json({error:'DOMAIN_IN_USE'},{status:409});
