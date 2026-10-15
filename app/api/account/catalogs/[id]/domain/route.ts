@@ -11,6 +11,7 @@ import {
   validateCustomDomainCertificate,
   verifyCustomDomainDns,
   writeCustomDomainFiles,
+  requestNginxReload,
 } from '@/lib/custom-domains';
 import { env } from '@/lib/env';
 
@@ -57,6 +58,9 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{id:stri
     }
 
     if(action==='check-dns'){
+      if(catalog.customDomainStatus==='active'&&catalog.customDomain===domain){
+        return NextResponse.json({ok:true,domain,target,status:'active'});
+      }
       await db().update(catalogs).set({
         customDomain:domain,
         customDomainStatus:'dns_verified',
@@ -85,7 +89,7 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{id:stri
       slug:catalog.slug,
       fullchainPem,
       privateKeyPem,
-    });
+    },false);
 
     const now=new Date();
     await db().update(catalogs).set({
@@ -95,6 +99,7 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{id:stri
       customDomainCertificateExpiresAt:expiresAt,
       updatedAt:now,
     }).where(eq(catalogs.id,id));
+    await requestNginxReload();
 
     return NextResponse.json({
       ok:true,
