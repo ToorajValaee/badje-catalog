@@ -29,7 +29,7 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{id:stri
     const catalog=await owned(user.id,id);
     if(!catalog)return NextResponse.json({error:'NOT_FOUND'},{status:404});
     const plan=await userPlan(user.id);
-    if(!plan?.customDomain)return NextResponse.json({error:'CUSTOM_DOMAIN_PLAN_REQUIRED'},{status:403});
+    if(!plan?.active||!plan.customDomain)return NextResponse.json({error:'CUSTOM_DOMAIN_PLAN_REQUIRED'},{status:403});
 
     const form=await request.formData();
     const action=String(form.get('action')||'activate');
