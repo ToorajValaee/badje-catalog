@@ -44,6 +44,7 @@ export default function UserCatalogManager({locale,customSlug,customDomain,custo
      if(!response.ok){
        const message=data.error==='DNS_NOT_READY'?(fa?`CNAME هنوز به ${data.target||customDomainTarget} اشاره نمی‌کند.`:`CNAME does not point to ${data.target||customDomainTarget} yet.`):
          data.error==='DOMAIN_IN_USE'?(fa?'این دامنه قبلاً استفاده شده است.':'This domain is already in use.'):
+         data.error==='REMOVE_CURRENT_DOMAIN_FIRST'?(fa?'ابتدا دامنه فعال فعلی را حذف کنید، سپس دامنه جدید را اضافه کنید.':'Remove the current active domain before adding a different one.'):
          data.error==='CERTIFICATE_HOST_MISMATCH'?(fa?'گواهی SSL این دامنه را پوشش نمی‌دهد.':'The certificate does not cover this domain.'):
          data.error==='PRIVATE_KEY_MISMATCH'?(fa?'Private key با گواهی مطابقت ندارد.':'The private key does not match the certificate.'):
          data.error==='CERTIFICATE_NOT_VALID'?(fa?'گواهی SSL هنوز معتبر نیست یا منقضی شده است.':'The SSL certificate is expired or not yet valid.'):
