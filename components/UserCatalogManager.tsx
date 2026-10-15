@@ -50,7 +50,6 @@ export default function UserCatalogManager({locale,customSlug,customDomain,custo
          data.error==='CERTIFICATE_NOT_VALID'?(fa?'گواهی SSL هنوز معتبر نیست یا منقضی شده است.':'The SSL certificate is expired or not yet valid.'):
          (data.error||'CUSTOM_DOMAIN_FAILED');
        setDomainMessage(message);
-       if(data.status==='dns_pending')setModal({type:'edit',item:{...modal.item,customDomain:domain,customDomainStatus:'dns_pending'}});
        return;
      }
      const nextStatus=data.status||modal.item.customDomainStatus;
