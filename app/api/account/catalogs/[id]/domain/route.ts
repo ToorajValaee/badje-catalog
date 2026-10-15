@@ -47,13 +47,6 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{id:stri
 
     const dnsOk=await verifyCustomDomainDns(domain);
     if(!dnsOk){
-      await db().update(catalogs).set({
-        customDomain:domain,
-        customDomainStatus:'dns_pending',
-        customDomainVerifiedAt:null,
-        customDomainCertificateExpiresAt:null,
-        updatedAt:new Date(),
-      }).where(eq(catalogs.id,id));
       return NextResponse.json({error:'DNS_NOT_READY',domain,target,status:'dns_pending'},{status:409});
     }
 
@@ -83,6 +76,16 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{id:stri
     const privateKeyPem=await privateKey.text();
     const {expiresAt}=validateCustomDomainCertificate(domain,fullchainPem,privateKeyPem);
 
+    if(catalog.customDomainStatus!=='active'){
+      await db().update(catalogs).set({
+        customDomain:domain,
+        customDomainStatus:'dns_verified',
+        customDomainVerifiedAt:new Date(),
+        customDomainCertificateExpiresAt:null,
+        updatedAt:new Date(),
+      }).where(eq(catalogs.id,id));
+    }
+
     await writeCustomDomainFiles({
       catalogId:id,
       domain,
@@ -111,7 +114,9 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{id:stri
     });
   }catch(error){
     const message=error instanceof Error?error.message:'CUSTOM_DOMAIN_FAILED';
+    const dbCode=(error as {code?:string;cause?:{code?:string}})?.code||(error as {cause?:{code?:string}})?.cause?.code;
     console.error('Custom domain setup failed',error);
+    if(dbCode==='23505')return NextResponse.json({error:'DOMAIN_IN_USE'},{status:409});
     const bad=new Set([
       'INVALID_DOMAIN','INVALID_CERTIFICATE','INVALID_PRIVATE_KEY','PRIVATE_KEY_MISMATCH',
       'CERTIFICATE_HOST_MISMATCH','CERTIFICATE_NOT_VALID','CERTIFICATE_TOO_LARGE',
