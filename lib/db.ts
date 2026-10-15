@@ -18,7 +18,7 @@ export function ensureSchema() {
       await pool().query(`
         CREATE TABLE IF NOT EXISTS plans (
           id varchar(36) PRIMARY KEY, code varchar(64) NOT NULL UNIQUE, name_en text NOT NULL, name_fa text NOT NULL,
-          storage_limit_bytes bigint NOT NULL, custom_slug boolean NOT NULL DEFAULT false, active boolean NOT NULL DEFAULT true,
+          storage_limit_bytes bigint NOT NULL, custom_slug boolean NOT NULL DEFAULT false, custom_domain boolean NOT NULL DEFAULT false, active boolean NOT NULL DEFAULT true,
           sort_order integer NOT NULL DEFAULT 0, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
         );
         CREATE TABLE IF NOT EXISTS users (
@@ -35,12 +35,18 @@ export function ensureSchema() {
         CREATE TABLE IF NOT EXISTS catalogs (
           id varchar(36) PRIMARY KEY, user_id varchar(36), title text NOT NULL, slug varchar(140) NOT NULL UNIQUE,
           object_key text NOT NULL, original_filename text NOT NULL, file_size bigint NOT NULL, active boolean NOT NULL DEFAULT true,
-          static_pdf boolean NOT NULL DEFAULT false, navigation_mode varchar(32) NOT NULL DEFAULT 'swipe-left',
+          custom_domain varchar(253), custom_domain_status varchar(32) NOT NULL DEFAULT 'none', custom_domain_verified_at timestamptz,
+          custom_domain_certificate_expires_at timestamptz, static_pdf boolean NOT NULL DEFAULT false, navigation_mode varchar(32) NOT NULL DEFAULT 'swipe-left',
           render_dpi integer NOT NULL DEFAULT 200, webp_quality integer NOT NULL DEFAULT 96, webp_lossless boolean NOT NULL DEFAULT true,
           generated_page_count integer, generated_link_count integer, generated_size bigint NOT NULL DEFAULT 0,
           generated_at timestamptz, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
         );
         ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash text;
+        ALTER TABLE plans ADD COLUMN IF NOT EXISTS custom_domain boolean NOT NULL DEFAULT false;
+        ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS custom_domain varchar(253);
+        ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS custom_domain_status varchar(32) NOT NULL DEFAULT 'none';
+        ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS custom_domain_verified_at timestamptz;
+        ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS custom_domain_certificate_expires_at timestamptz;
         ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS user_id varchar(36);
         ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS static_pdf boolean NOT NULL DEFAULT false;
         ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS navigation_mode varchar(32) NOT NULL DEFAULT 'swipe-left';
@@ -53,6 +59,7 @@ export function ensureSchema() {
         ALTER TABLE catalogs ADD COLUMN IF NOT EXISTS generated_at timestamptz;
         CREATE INDEX IF NOT EXISTS catalogs_created_at_idx ON catalogs (created_at DESC);
         CREATE INDEX IF NOT EXISTS catalogs_user_id_idx ON catalogs (user_id);
+        CREATE UNIQUE INDEX IF NOT EXISTS catalogs_custom_domain_uq ON catalogs (custom_domain) WHERE custom_domain IS NOT NULL;
         CREATE INDEX IF NOT EXISTS otp_codes_email_idx ON otp_codes (email, created_at DESC);
       `);
       const free = await pool().query(`SELECT id FROM plans WHERE code='free' LIMIT 1`);
