@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import { findCatalogBySlug } from '@/lib/catalogs';
 import { normalizeSlug } from '@/lib/slug';
 import { readManifest } from '@/lib/storage';
@@ -34,6 +35,10 @@ export default async function CatalogScreenPage({ params }: { params: RouteParam
   const catalog = await findCatalogBySlug(cleanSlug);
   if (!catalog) notFound();
 
+  const requestHeaders=await headers();
+  const host=(requestHeaders.get('x-forwarded-host')||requestHeaders.get('host')||'').split(':')[0].toLowerCase();
+  const customDomainRoot=catalog.customDomainStatus==='active'&&!!catalog.customDomain&&host===catalog.customDomain;
+
   const manifest = await readManifest(catalog.id);
   if (!manifest?.pages?.length || pageNumber > manifest.pageCount || !manifest.pages[pageNumber - 1]) {
     notFound();
@@ -48,5 +53,6 @@ export default async function CatalogScreenPage({ params }: { params: RouteParam
     initialPage={pageNumber}
     staticPdf={catalog.staticPdf}
     navigationMode={catalog.navigationMode as StaticNavigationMode}
+    customDomainRoot={customDomainRoot}
   />;
 }
