@@ -34,6 +34,8 @@ volumes:
   - /ABSOLUTE/PATH/catalog.badje.ir/custom-domains/certs:/data/custom-domains/certs:ro
 ```
 
+The app container runs as UID 1001, so the host custom-domains directory must be writable by UID 1001. The Nginx master process must also be able to read the mounted certificate files.
+
 The repository Nginx config includes:
 
 ```nginx
@@ -44,6 +46,7 @@ Create the host directories before starting Nginx:
 
 ```bash
 mkdir -p custom-domains/nginx custom-domains/certs
+sudo chown -R 1001:1001 custom-domains
 ```
 
 ## Automatic reload on the host
